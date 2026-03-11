@@ -5,6 +5,7 @@ import Controls from './components/Controls';
 import TodayActivity from './components/TodayActivity';
 import FooterActions from './components/FooterActions';
 import { triggerHaptic } from './lib/haptics';
+import { getFeedbackState, playFeedbackTone, testFeedbackTone } from './lib/feedback';
 import { usePomodoroTimer } from './hooks/usePomodoroTimer';
 import './App.css';
 
@@ -95,6 +96,7 @@ function App() {
   const [taskDraft, setTaskDraft] = useState(preferences.currentTask);
   const [focusDraft, setFocusDraft] = useState(String(preferences.focusMinutes));
   const [breakDraft, setBreakDraft] = useState(String(preferences.breakMinutes));
+  const [soundError, setSoundError] = useState<string | null>(null);
   const { breakMinutes, currentTask, focusMinutes, hapticsEnabled } = preferences;
   const {
     pomodoroState,
@@ -109,6 +111,10 @@ function App() {
     breakMinutes,
     onSessionComplete: (completedSession, nextSession) => {
       triggerHaptic('success', hapticsEnabled);
+      const played = playFeedbackTone('success', hapticsEnabled);
+      if (!played && window.electronAPI) {
+        window.electronAPI.playFeedback();
+      }
 
       if (typeof window !== 'undefined' && 'Notification' in window) {
         if (Notification.permission === 'granted') {
@@ -133,6 +139,22 @@ function App() {
   }, [preferences]);
 
   useEffect(() => {
+    const unlockAudio = () => {
+      void testFeedbackTone();
+      window.removeEventListener('pointerdown', unlockAudio);
+      window.removeEventListener('keydown', unlockAudio);
+    };
+
+    window.addEventListener('pointerdown', unlockAudio, { once: true });
+    window.addEventListener('keydown', unlockAudio, { once: true });
+
+    return () => {
+      window.removeEventListener('pointerdown', unlockAudio);
+      window.removeEventListener('keydown', unlockAudio);
+    };
+  }, []);
+
+  useEffect(() => {
     setTaskDraft(currentTask);
   }, [currentTask]);
 
@@ -148,6 +170,34 @@ function App() {
     }
   }, [timeLeft, currentTask]);
 
+  const fireFeedback = async (type: Parameters<typeof playFeedbackTone>[0]) => {
+    if (!hapticsEnabled) {
+      setSoundError('Sound is off.');
+      return;
+    }
+
+    triggerHaptic(type, hapticsEnabled);
+    const played = playFeedbackTone(type, hapticsEnabled);
+    if (played) {
+      setSoundError(null);
+      return;
+    }
+
+    if (window.electronAPI) {
+      window.electronAPI.playFeedback();
+      setSoundError(null);
+      return;
+    }
+
+    const fallback = await testFeedbackTone();
+    if (!fallback.ok) {
+      setSoundError('Sound is blocked by the browser.');
+      return;
+    }
+
+    setSoundError(null);
+  };
+
   const handleTaskSave = () => {
     const nextTask = taskDraft.trim();
     if (!nextTask) {
@@ -161,7 +211,7 @@ function App() {
       currentTask: nextTask,
     }));
     setIsEditingTask(false);
-    triggerHaptic('light', hapticsEnabled);
+    fireFeedback('light');
   };
 
   const handleSettingsSave = () => {
@@ -183,7 +233,7 @@ function App() {
     updateDurations(resolvedFocus, resolvedBreak);
     resetTimer('focus');
     setIsSettingsOpen(false);
-    triggerHaptic('light', hapticsEnabled);
+    fireFeedback('light');
   };
 
   const isElectron = Boolean(window.electronAPI);
@@ -228,11 +278,11 @@ function App() {
           pomodoroState={pomodoroState}
           setPomodoroState={setPomodoroState}
           onReset={() => resetTimer()}
-          onHaptic={(type) => triggerHaptic(type, hapticsEnabled)}
+          onHaptic={(type) => {
+            void fireFeedback(type);
+          }}
           onPlayFeedback={() => {
-            if (window.electronAPI) {
-              window.electronAPI.playFeedback();
-            }
+            void fireFeedback('medium');
           }}
         />
       </div>
@@ -267,7 +317,32 @@ function App() {
                 />
               </label>
             </div>
+            <div className="settings-debug">
+              <span className="field-label">Sound</span>
+              <span className="settings-debug-text">
+                {`AudioContext: ${getFeedbackState()}`}
+              </span>
+            </div>
+            {soundError ? <div className="settings-error">{soundError}</div> : null}
             <div className="inline-panel-actions">
+              <button
+                className="secondary-button"
+                onClick={async () => {
+                  setSoundError(null);
+                  const result = await testFeedbackTone();
+                  if (!result.ok) {
+                    setSoundError(
+                      result.reason === 'unavailable'
+                        ? 'Sound API unavailable in this browser.'
+                        : 'Sound is blocked by the browser.'
+                    );
+                    return;
+                  }
+                  setSoundError(null);
+                }}
+              >
+                Test sound
+              </button>
               <button
                 className="secondary-button"
                 onClick={() => {
@@ -292,21 +367,21 @@ function App() {
             setIsSettingsOpen(false);
             setTaskDraft(currentTask);
             setIsEditingTask((previous) => !previous);
-            triggerHaptic('light', hapticsEnabled);
+            void fireFeedback('light');
           }}
           onToggleHaptics={() => {
             setPreferences((previous) => ({
               ...previous,
               hapticsEnabled: !previous.hapticsEnabled,
             }));
-            triggerHaptic('light', true);
+            void fireFeedback('light');
           }}
           onToggleSettings={() => {
             setIsEditingTask(false);
             setFocusDraft(String(focusMinutes));
             setBreakDraft(String(breakMinutes));
             setIsSettingsOpen((previous) => !previous);
-            triggerHaptic('light', hapticsEnabled);
+            void fireFeedback('light');
           }}
         />
       </div>

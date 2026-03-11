@@ -124,6 +124,23 @@ button:active {
   gap: 8px;
 }
 
+.settings-debug {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.settings-debug-text {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.settings-error {
+  font-size: 12px;
+  color: #ff8b8b;
+}
+
 .primary-button,
 .secondary-button {
   -webkit-app-region: no-drag;

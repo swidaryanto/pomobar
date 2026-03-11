@@ -68,7 +68,7 @@ const FooterActions: React.FC<FooterActionsProps> = ({
             <circle cx="12" cy="12" r="10" strokeDasharray="3 3"></circle>
             <circle cx="12" cy="12" r="3"></circle>
           </svg>
-          {hapticsEnabled ? 'Haptics on' : 'Haptics off'}
+          {hapticsEnabled ? 'Sound on' : 'Sound off'}
         </button>
 
         <button

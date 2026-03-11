@@ -1,4 +1,4 @@
-import { app, BrowserWindow, Tray, ipcMain, nativeImage, Menu, shell } from 'electron';
+import { app, BrowserWindow, Tray, ipcMain, nativeImage, Menu, shell, screen } from 'electron';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
@@ -32,11 +32,18 @@ const createMainWindow = () => {
 };
 
 const createTray = () => {
-    const icon = nativeImage.createEmpty();
-    icon.resize({ width: 16, height: 16 });
+    const traySvg = `
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
+        <rect x="3" y="2" width="10" height="12" rx="2" fill="black"/>
+        <rect x="5" y="4" width="6" height="6" rx="1" fill="white"/>
+      </svg>
+    `;
+    const icon = nativeImage
+        .createFromDataURL(`data:image/svg+xml;base64,${Buffer.from(traySvg).toString('base64')}`)
+        .resize({ width: 16, height: 16 });
 
     tray = new Tray(icon);
-    tray.setTitle('No | 25:00');
+    tray.setTitle('Pomobar');
     tray.setToolTip('Pomobar');
 
     const contextMenu = Menu.buildFromTemplate([
@@ -57,12 +64,15 @@ const createTray = () => {
         } else {
             const trayBounds = tray?.getBounds() || bounds;
             const { x, y, width: trayWidth, height: trayHeight } = trayBounds;
-            const { width } = mainWindow.getBounds();
+            const { width, height } = mainWindow.getBounds();
+            const targetX = Math.round(x + trayWidth / 2 - width / 2);
+            const targetY = Math.round(y + trayHeight);
+            const display = screen.getDisplayNearestPoint({ x, y });
+            const { x: dx, y: dy, width: dw, height: dh } = display.workArea;
+            const clampedX = Math.min(Math.max(targetX, dx), dx + dw - width);
+            const clampedY = Math.min(Math.max(targetY, dy), dy + dh - height);
 
-            const px = Math.round(x + trayWidth / 2 - width / 2);
-            const py = Math.round(y + trayHeight);
-
-            mainWindow.setPosition(px, py, false);
+            mainWindow.setPosition(clampedX, clampedY, false);
             mainWindow.show();
             mainWindow.focus();
         }
