@@ -280,7 +280,21 @@ function App() {
     <div className={`app-container${isElectron ? ' electron' : ''}`}>
       <div className="card top-card">
         <Header />
-        <Timer timeLeft={timeLeft} currentTask={`${sessionLabel}: ${currentTask}`} />
+        <div className="timer-layout">
+          <Timer timeLeft={timeLeft} currentTask={`${sessionLabel}: ${currentTask}`} />
+          <Controls
+            setTimeLeft={setTimeLeft}
+            pomodoroState={pomodoroState}
+            setPomodoroState={setPomodoroState}
+            onReset={() => resetTimer()}
+            onHaptic={(type) => {
+              void fireFeedback(type);
+            }}
+            onPlayFeedback={() => {
+              void fireFeedback('medium');
+            }}
+          />
+        </div>
         {isEditingTask ? (
           <div className="inline-panel">
             <label className="field-label" htmlFor="task-name-input">
@@ -311,18 +325,6 @@ function App() {
             </div>
           </div>
         ) : null}
-        <Controls
-          setTimeLeft={setTimeLeft}
-          pomodoroState={pomodoroState}
-          setPomodoroState={setPomodoroState}
-          onReset={() => resetTimer()}
-          onHaptic={(type) => {
-            void fireFeedback(type);
-          }}
-          onPlayFeedback={() => {
-            void fireFeedback('medium');
-          }}
-        />
       </div>
 
       <div className="card activity-card">

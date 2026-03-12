@@ -7,7 +7,7 @@ const Header: React.FC = () => {
     }).format(new Date()).toUpperCase();
 
     return (
-        <div style={{ display: 'flex', flexDirection: 'column' }}>
+        <div className="drag-region" style={{ display: 'flex', flexDirection: 'column' }}>
             {/* Top bar with traffic lights and More */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
                 <div style={{ display: 'flex', gap: '8px' }}>

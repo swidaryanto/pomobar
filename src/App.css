@@ -5,12 +5,18 @@
   gap: 12px;
   background-color: var(--bg-primary);
   padding: 12px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .app-container.electron {
-  -webkit-app-region: drag;
+  -webkit-app-region: no-drag;
   background-color: transparent;
   padding: 0 0 12px;
+}
+
+.drag-region {
+  -webkit-app-region: drag;
 }
 
 button {
@@ -58,6 +64,13 @@ button:active {
   display: flex;
   flex-direction: column;
   padding: 16px;
+  gap: 16px;
+}
+
+.timer-layout {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   gap: 16px;
 }
 
@@ -146,6 +159,120 @@ body[data-theme='analog'] .theme-option.is-active {
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--text-secondary);
+}
+
+.timer-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 8px 0;
+}
+
+.timer-task {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.timer-clock {
+  font-size: 64px;
+  font-weight: 400;
+  letter-spacing: -2px;
+  line-height: 1;
+}
+
+.timer-ticks {
+  display: flex;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.timer-tick {
+  width: 4px;
+  height: 6px;
+  border-radius: 2px;
+  background-color: var(--divider);
+  opacity: 0.4;
+}
+
+.timer-tick.is-active {
+  background-color: var(--text-secondary);
+  opacity: 1;
+}
+
+.controls-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr) minmax(0, 1fr);
+  gap: 8px;
+}
+
+.control-button {
+  background-color: var(--bg-tertiary);
+  color: var(--text-primary);
+  font-size: 20px;
+  padding: 12px 0;
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-button);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.control-button--accent {
+  color: var(--accent-yellow);
+}
+
+.control-reset {
+  grid-column: 1 / -1;
+  background-color: transparent;
+  color: var(--text-secondary);
+  font-size: 12px;
+  padding: 8px 0;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--divider);
+}
+
+body[data-theme='analog'] .timer-layout {
+  align-items: center;
+}
+
+body[data-theme='analog'] .timer-block {
+  align-items: flex-start;
+  margin: 0;
+}
+
+body[data-theme='analog'] .timer-task {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+body[data-theme='analog'] .timer-clock {
+  font-size: 52px;
+  letter-spacing: -1px;
+}
+
+body[data-theme='analog'] .timer-ticks {
+  margin-top: 10px;
+  opacity: 0.7;
+}
+
+body[data-theme='analog'] .controls-grid {
+  grid-template-columns: repeat(3, 34px);
+  justify-content: end;
+  align-items: center;
+}
+
+body[data-theme='analog'] .control-button {
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border-radius: 999px;
+  font-size: 16px;
+}
+
+body[data-theme='analog'] .control-reset {
+  font-size: 11px;
+  padding: 6px 0;
 }
 
 .inline-input {

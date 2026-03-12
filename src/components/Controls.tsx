@@ -39,35 +39,14 @@ const Controls: React.FC<ControlsProps> = ({
   };
 
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr) minmax(0,1.2fr) minmax(0,1fr)', gap: '8px' }}>
-      <button
-        onClick={() => adjustTime(-5)}
-        style={{
-          backgroundColor: 'var(--bg-tertiary)',
-          color: 'var(--text-primary)',
-          fontSize: '20px',
-          padding: '12px 0',
-          borderRadius: 'var(--radius-md)',
-          boxShadow: 'var(--shadow-button)',
-        }}
-      >
+    <div className="controls-grid">
+      <button className="control-button" onClick={() => adjustTime(-5)}>
         −
       </button>
 
       <button
-        className={isPlayPulse ? 'play-pulse' : ''}
+        className={`control-button control-button--accent${isPlayPulse ? ' play-pulse' : ''}`}
         onClick={toggleTimer}
-        style={{
-          backgroundColor: 'var(--bg-tertiary)',
-          color: 'var(--accent-yellow)',
-          fontSize: '18px',
-          padding: '12px 0',
-          borderRadius: 'var(--radius-md)',
-          boxShadow: 'var(--shadow-button)',
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-        }}
       >
         {pomodoroState === 'running' ? (
           <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
@@ -81,33 +60,15 @@ const Controls: React.FC<ControlsProps> = ({
         )}
       </button>
 
-      <button
-        onClick={() => adjustTime(5)}
-        style={{
-          backgroundColor: 'var(--bg-tertiary)',
-          color: 'var(--text-primary)',
-          fontSize: '20px',
-          padding: '12px 0',
-          borderRadius: 'var(--radius-md)',
-          boxShadow: 'var(--shadow-button)',
-        }}
-      >
+      <button className="control-button" onClick={() => adjustTime(5)}>
         ＋
       </button>
 
       <button
+        className="control-reset"
         onClick={() => {
           onHaptic('medium');
           onReset();
-        }}
-        style={{
-          gridColumn: '1 / -1',
-          backgroundColor: 'transparent',
-          color: 'var(--text-secondary)',
-          fontSize: '12px',
-          padding: '8px 0',
-          borderRadius: 'var(--radius-md)',
-          border: '1px solid var(--divider)',
         }}
       >
         Reset timer
