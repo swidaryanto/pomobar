@@ -22,7 +22,9 @@ declare global {
 const DEFAULT_FOCUS_MIN = 25;
 const DEFAULT_BREAK_MIN = 5;
 const DEFAULT_TASK = 'Focus Task';
+const DEFAULT_THEME = 'analog';
 const STORAGE_KEY = 'pomobar-preferences';
+type ThemeName = 'dark' | 'analog';
 
 const formatTime = (seconds: number) => {
   const minutes = Math.floor(seconds / 60)
@@ -37,6 +39,7 @@ interface StoredPreferences {
   currentTask: string;
   focusMinutes: number;
   hapticsEnabled: boolean;
+  theme: ThemeName;
 }
 
 const readStoredPreferences = (): StoredPreferences => {
@@ -46,6 +49,7 @@ const readStoredPreferences = (): StoredPreferences => {
       currentTask: DEFAULT_TASK,
       focusMinutes: DEFAULT_FOCUS_MIN,
       hapticsEnabled: true,
+      theme: DEFAULT_THEME,
     };
   }
 
@@ -57,6 +61,9 @@ const readStoredPreferences = (): StoredPreferences => {
     }
 
     const parsed = JSON.parse(raw) as Partial<StoredPreferences>;
+
+    const resolvedTheme =
+      parsed.theme === 'dark' || parsed.theme === 'analog' ? parsed.theme : DEFAULT_THEME;
 
     return {
       breakMinutes:
@@ -73,6 +80,7 @@ const readStoredPreferences = (): StoredPreferences => {
           : DEFAULT_FOCUS_MIN,
       hapticsEnabled:
         typeof parsed.hapticsEnabled === 'boolean' ? parsed.hapticsEnabled : true,
+      theme: resolvedTheme,
     };
   } catch {
     return {
@@ -80,6 +88,7 @@ const readStoredPreferences = (): StoredPreferences => {
       currentTask: DEFAULT_TASK,
       focusMinutes: DEFAULT_FOCUS_MIN,
       hapticsEnabled: true,
+      theme: DEFAULT_THEME,
     };
   }
 };
@@ -96,6 +105,7 @@ function App() {
   const [taskDraft, setTaskDraft] = useState(preferences.currentTask);
   const [focusDraft, setFocusDraft] = useState(String(preferences.focusMinutes));
   const [breakDraft, setBreakDraft] = useState(String(preferences.breakMinutes));
+  const [themeDraft, setThemeDraft] = useState<ThemeName>(preferences.theme);
   const [soundError, setSoundError] = useState<string | null>(null);
   const { breakMinutes, currentTask, focusMinutes, hapticsEnabled } = preferences;
   const {
@@ -141,6 +151,18 @@ function App() {
   }, [preferences]);
 
   useEffect(() => {
+    if (typeof document === 'undefined') {
+      return;
+    }
+
+    document.body.dataset.theme = themeDraft;
+
+    return () => {
+      delete document.body.dataset.theme;
+    };
+  }, [themeDraft]);
+
+  useEffect(() => {
     const unlockAudio = () => {
       void testFeedbackTone();
       window.removeEventListener('pointerdown', unlockAudio);
@@ -164,6 +186,10 @@ function App() {
     setFocusDraft(String(focusMinutes));
     setBreakDraft(String(breakMinutes));
   }, [focusMinutes, breakMinutes]);
+
+  useEffect(() => {
+    setThemeDraft(preferences.theme);
+  }, [preferences.theme]);
 
   useEffect(() => {
     const timeString = `${currentTask} | ${formatTime(timeLeft)}`;
@@ -231,6 +257,7 @@ function App() {
     if (!resolvedFocus || !resolvedBreak) {
       setFocusDraft(String(focusMinutes));
       setBreakDraft(String(breakMinutes));
+      setThemeDraft(preferences.theme);
       setIsSettingsOpen(false);
       return;
     }
@@ -239,6 +266,7 @@ function App() {
       ...previous,
       breakMinutes: resolvedBreak,
       focusMinutes: resolvedFocus,
+      theme: themeDraft,
     }));
     updateDurations(resolvedFocus, resolvedBreak);
     resetTimer('focus');
@@ -327,6 +355,25 @@ function App() {
                 />
               </label>
             </div>
+            <div className="settings-field">
+              <span className="field-label">Theme</span>
+              <div className="theme-toggle" role="group" aria-label="Theme">
+                <button
+                  type="button"
+                  className={`theme-option${themeDraft === 'dark' ? ' is-active' : ''}`}
+                  onClick={() => setThemeDraft('dark')}
+                >
+                  Dark
+                </button>
+                <button
+                  type="button"
+                  className={`theme-option${themeDraft === 'analog' ? ' is-active' : ''}`}
+                  onClick={() => setThemeDraft('analog')}
+                >
+                  Analog
+                </button>
+              </div>
+            </div>
             <div className="settings-debug">
               <span className="field-label">Sound</span>
               <span className="settings-debug-text">
@@ -362,6 +409,7 @@ function App() {
                 onClick={() => {
                   setFocusDraft(String(focusMinutes));
                   setBreakDraft(String(breakMinutes));
+                  setThemeDraft(preferences.theme);
                   setIsSettingsOpen(false);
                 }}
               >
@@ -400,6 +448,7 @@ function App() {
             setIsEditingTask(false);
             setFocusDraft(String(focusMinutes));
             setBreakDraft(String(breakMinutes));
+            setThemeDraft(preferences.theme);
             setIsSettingsOpen((previous) => !previous);
             void fireFeedback('light');
           }}
