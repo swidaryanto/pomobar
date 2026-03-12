@@ -119,7 +119,7 @@ const playFallbackTone = async (type: FeedbackType) => {
   }
 };
 
-export const playFeedbackTone = (type: FeedbackType, enabled = true) => {
+export const playFeedbackTone = async (type: FeedbackType, enabled = true) => {
   if (!enabled) {
     return false;
   }
@@ -131,11 +131,7 @@ export const playFeedbackTone = (type: FeedbackType, enabled = true) => {
 
   try {
     if (context.state === 'suspended') {
-      context
-        .resume()
-        .then(() => playOnce(context, type))
-        .catch(() => {});
-      return true;
+      await context.resume();
     }
 
     playOnce(context, type);

@@ -111,10 +111,12 @@ function App() {
     breakMinutes,
     onSessionComplete: (completedSession, nextSession) => {
       triggerHaptic('success', hapticsEnabled);
-      const played = playFeedbackTone('success', hapticsEnabled);
-      if (!played && window.electronAPI) {
-        window.electronAPI.playFeedback();
-      }
+      void (async () => {
+        const played = await playFeedbackTone('success', hapticsEnabled);
+        if (!played && window.electronAPI) {
+          window.electronAPI.playFeedback();
+        }
+      })();
 
       if (typeof window !== 'undefined' && 'Notification' in window) {
         if (Notification.permission === 'granted') {
@@ -170,14 +172,20 @@ function App() {
     }
   }, [timeLeft, currentTask]);
 
-  const fireFeedback = async (type: Parameters<typeof playFeedbackTone>[0]) => {
-    if (!hapticsEnabled) {
-      setSoundError('Sound is off.');
+  const fireFeedback = async (
+    type: Parameters<typeof playFeedbackTone>[0],
+    options: { enabledOverride?: boolean; showError?: boolean } = {}
+  ) => {
+    const enabled = options.enabledOverride ?? hapticsEnabled;
+    if (!enabled) {
+      if (options.showError) {
+        setSoundError('Sound is off.');
+      }
       return;
     }
 
-    triggerHaptic(type, hapticsEnabled);
-    const played = playFeedbackTone(type, hapticsEnabled);
+    triggerHaptic(type, enabled);
+    const played = await playFeedbackTone(type, enabled);
     if (played) {
       setSoundError(null);
       return;
@@ -191,7 +199,9 @@ function App() {
 
     const fallback = await testFeedbackTone();
     if (!fallback.ok) {
-      setSoundError('Sound is blocked by the browser.');
+      if (options.showError) {
+        setSoundError('Sound is blocked by the browser.');
+      }
       return;
     }
 
@@ -211,7 +221,7 @@ function App() {
       currentTask: nextTask,
     }));
     setIsEditingTask(false);
-    fireFeedback('light');
+    void fireFeedback('light');
   };
 
   const handleSettingsSave = () => {
@@ -233,7 +243,7 @@ function App() {
     updateDurations(resolvedFocus, resolvedBreak);
     resetTimer('focus');
     setIsSettingsOpen(false);
-    fireFeedback('light');
+    void fireFeedback('light');
   };
 
   const isElectron = Boolean(window.electronAPI);
@@ -329,6 +339,10 @@ function App() {
                 className="secondary-button"
                 onClick={async () => {
                   setSoundError(null);
+                  if (!hapticsEnabled) {
+                    setSoundError('Sound is off.');
+                    return;
+                  }
                   const result = await testFeedbackTone();
                   if (!result.ok) {
                     setSoundError(
@@ -370,11 +384,17 @@ function App() {
             void fireFeedback('light');
           }}
           onToggleHaptics={() => {
-            setPreferences((previous) => ({
-              ...previous,
-              hapticsEnabled: !previous.hapticsEnabled,
-            }));
-            void fireFeedback('light');
+            setSoundError(null);
+            setPreferences((previous) => {
+              const nextEnabled = !previous.hapticsEnabled;
+              if (nextEnabled) {
+                void fireFeedback('light', { enabledOverride: true });
+              }
+              return {
+                ...previous,
+                hapticsEnabled: nextEnabled,
+              };
+            });
           }}
           onToggleSettings={() => {
             setIsEditingTask(false);
