@@ -18,51 +18,19 @@ const FooterActions: React.FC<FooterActionsProps> = ({
   onToggleSettings,
 }) => {
   return (
-    <div
-      style={{
-        display: 'flex',
-        justifyContent: 'center',
-        marginTop: 'auto',
-        paddingTop: '16px',
-      }}
-    >
-      <div
-        style={{
-          backgroundColor: 'var(--bg-tertiary)',
-          borderRadius: 'var(--radius-md)',
-          padding: '8px 16px',
-          display: 'flex',
-          gap: '16px',
-          boxShadow: 'var(--shadow-button)',
-        }}
-      >
+    <div className="footer-actions">
+      <div className="footer-actions-panel">
         <button
           onClick={onToggleTaskEditor}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '6px',
-            color: 'var(--text-primary)',
-            backgroundColor: 'transparent',
-            fontSize: '13px',
-            fontWeight: 500,
-          }}
+          className="footer-actions-button"
         >
-          <span style={{ fontSize: '16px', fontWeight: 300 }}>+</span> {isEditingTask ? 'Close task' : 'Edit task'}
+          <span className="footer-actions-icon">+</span>
+          {isEditingTask ? 'Close task' : 'Edit task'}
         </button>
 
         <button
           onClick={onToggleHaptics}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '6px',
-            color: 'var(--text-primary)',
-            backgroundColor: 'transparent',
-            fontSize: '13px',
-            fontWeight: 500,
-            opacity: hapticsEnabled ? 1 : 0.55,
-          }}
+          className={`footer-actions-button${hapticsEnabled ? '' : ' is-muted'}`}
         >
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <circle cx="12" cy="12" r="10" strokeDasharray="3 3"></circle>
@@ -73,15 +41,7 @@ const FooterActions: React.FC<FooterActionsProps> = ({
 
         <button
           onClick={onToggleSettings}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '6px',
-            color: 'var(--text-primary)',
-            backgroundColor: 'transparent',
-            fontSize: '13px',
-            fontWeight: 500,
-          }}
+          className="footer-actions-button"
         >
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <circle cx="12" cy="12" r="3"></circle>

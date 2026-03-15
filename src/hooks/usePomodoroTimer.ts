@@ -6,7 +6,17 @@ export type SessionType = 'focus' | 'break';
 interface UsePomodoroTimerOptions {
   focusMinutes: number;
   breakMinutes: number;
+  initialState?: {
+    sessionType: SessionType;
+    timeLeft: number;
+    pomodoroState: PomodoroState;
+  };
   onSessionComplete?: (completedSession: SessionType, nextSession: SessionType) => void;
+  onStateChange?: (state: {
+    sessionType: SessionType;
+    timeLeft: number;
+    pomodoroState: PomodoroState;
+  }) => void;
 }
 
 const toSeconds = (minutes: number) => minutes * 60;
@@ -14,11 +24,19 @@ const toSeconds = (minutes: number) => minutes * 60;
 export function usePomodoroTimer({
   focusMinutes,
   breakMinutes,
+  initialState,
   onSessionComplete,
+  onStateChange,
 }: UsePomodoroTimerOptions) {
-  const [sessionType, setSessionType] = useState<SessionType>('focus');
-  const [timeLeft, setTimeLeft] = useState(toSeconds(focusMinutes));
-  const [pomodoroState, setPomodoroState] = useState<PomodoroState>('idle');
+  const [sessionType, setSessionType] = useState<SessionType>(
+    initialState?.sessionType ?? 'focus'
+  );
+  const [timeLeft, setTimeLeft] = useState(
+    initialState?.timeLeft ?? toSeconds(focusMinutes)
+  );
+  const [pomodoroState, setPomodoroState] = useState<PomodoroState>(
+    initialState?.pomodoroState ?? 'idle'
+  );
 
   const getDuration = useCallback(
     (session: SessionType) => toSeconds(session === 'focus' ? focusMinutes : breakMinutes),
@@ -80,8 +98,14 @@ export function usePomodoroTimer({
       return;
     }
 
-    setTimeLeft(getDuration(sessionType));
+    if (pomodoroState === 'idle') {
+      setTimeLeft(getDuration(sessionType));
+    }
   }, [breakMinutes, focusMinutes, getDuration, pomodoroState, sessionType]);
+
+  useEffect(() => {
+    onStateChange?.({ sessionType, timeLeft, pomodoroState });
+  }, [onStateChange, pomodoroState, sessionType, timeLeft]);
 
   return {
     pomodoroState,

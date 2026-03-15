@@ -1,4 +1,5 @@
 import { app, BrowserWindow, Tray, ipcMain, nativeImage, Menu, shell, screen } from 'electron';
+import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
@@ -32,15 +33,24 @@ const createMainWindow = () => {
 };
 
 const createTray = () => {
-    const traySvg = `
-      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
-        <rect x="3" y="2" width="10" height="12" rx="2" fill="black"/>
-        <rect x="5" y="4" width="6" height="6" rx="1" fill="white"/>
-      </svg>
-    `;
-    const icon = nativeImage
-        .createFromDataURL(`data:image/svg+xml;base64,${Buffer.from(traySvg).toString('base64')}`)
-        .resize({ width: 16, height: 16 });
+    const icon = (() => {
+        const svgPath = path.join(app.getAppPath(), 'electron', 'assets', 'trayTemplate.svg');
+        try {
+            const svgContent = fs.readFileSync(svgPath, 'utf-8');
+            return nativeImage
+                .createFromDataURL(`data:image/svg+xml;base64,${Buffer.from(svgContent).toString('base64')}`)
+                .resize({ width: 16, height: 16 });
+        } catch {
+            return nativeImage
+                .createFromDataURL(
+                    `data:image/svg+xml;base64,${Buffer.from(
+                        '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16"><rect x="3" y="2" width="10" height="12" rx="2" fill="black"/><rect x="5" y="4" width="6" height="6" rx="1" fill="white"/></svg>'
+                    ).toString('base64')}`
+                )
+                .resize({ width: 16, height: 16 });
+        }
+    })();
+    icon.setTemplateImage(true);
 
     tray = new Tray(icon);
     tray.setTitle('Pomobar');

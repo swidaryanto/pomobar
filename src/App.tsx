@@ -24,6 +24,7 @@ const DEFAULT_BREAK_MIN = 5;
 const DEFAULT_TASK = 'Focus Task';
 const DEFAULT_THEME = 'analog';
 const STORAGE_KEY = 'pomobar-preferences';
+const SESSION_KEY = 'pomobar-session';
 type ThemeName = 'dark' | 'analog';
 
 const formatTime = (seconds: number) => {
@@ -40,6 +41,13 @@ interface StoredPreferences {
   focusMinutes: number;
   hapticsEnabled: boolean;
   theme: ThemeName;
+}
+
+interface StoredSession {
+  sessionType: 'focus' | 'break';
+  pomodoroState: 'idle' | 'running' | 'paused';
+  timeLeft: number;
+  lastUpdated: number;
 }
 
 const readStoredPreferences = (): StoredPreferences => {
@@ -98,8 +106,79 @@ const clampMinutesInput = (value: string) => {
   return Number.isFinite(parsed) && parsed > 0 ? Math.round(parsed) : null;
 };
 
+const readStoredSession = (preferences: StoredPreferences) => {
+  if (typeof window === 'undefined') {
+    return null;
+  }
+
+  try {
+    const raw = window.localStorage.getItem(SESSION_KEY);
+    if (!raw) {
+      return null;
+    }
+
+    const parsed = JSON.parse(raw) as Partial<StoredSession>;
+    const sessionType =
+      parsed.sessionType === 'focus' || parsed.sessionType === 'break'
+        ? parsed.sessionType
+        : null;
+    const pomodoroState =
+      parsed.pomodoroState === 'idle' ||
+      parsed.pomodoroState === 'running' ||
+      parsed.pomodoroState === 'paused'
+        ? parsed.pomodoroState
+        : null;
+
+    if (!sessionType || !pomodoroState || typeof parsed.timeLeft !== 'number') {
+      return null;
+    }
+
+    const durationFor = (session: 'focus' | 'break') =>
+      session === 'focus'
+        ? preferences.focusMinutes * 60
+        : preferences.breakMinutes * 60;
+
+    let timeLeft = Math.max(0, Math.floor(parsed.timeLeft));
+    let nextSession = sessionType;
+    let nextState = pomodoroState;
+
+    if (pomodoroState === 'running' && typeof parsed.lastUpdated === 'number') {
+      const elapsed = Math.floor((Date.now() - parsed.lastUpdated) / 1000);
+      const remaining = timeLeft - elapsed;
+      if (remaining <= 0) {
+        nextSession = sessionType === 'focus' ? 'break' : 'focus';
+        nextState = 'idle';
+        timeLeft = durationFor(nextSession);
+      } else {
+        timeLeft = remaining;
+      }
+    }
+
+    const maxDuration = durationFor(nextSession);
+    if (timeLeft <= 0 || timeLeft > maxDuration) {
+      timeLeft = maxDuration;
+      if (nextState === 'running') {
+        nextState = 'idle';
+      }
+    }
+
+    return {
+      sessionType: nextSession,
+      pomodoroState: nextState,
+      timeLeft,
+    };
+  } catch {
+    return null;
+  }
+};
+
 function App() {
-  const [preferences, setPreferences] = useState(readStoredPreferences);
+  const initialPreferences = useMemo(readStoredPreferences, []);
+  const initialSession = useMemo(
+    () => readStoredSession(initialPreferences),
+    [initialPreferences]
+  );
+  const [preferences, setPreferences] = useState(initialPreferences);
   const [isEditingTask, setIsEditingTask] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [taskDraft, setTaskDraft] = useState(preferences.currentTask);
@@ -119,6 +198,7 @@ function App() {
   } = usePomodoroTimer({
     focusMinutes,
     breakMinutes,
+    initialState: initialSession ?? undefined,
     onSessionComplete: (completedSession, nextSession) => {
       triggerHaptic('success', hapticsEnabled);
       void (async () => {
@@ -138,6 +218,16 @@ function App() {
           });
         }
       }
+    },
+    onStateChange: (state) => {
+      if (typeof window === 'undefined') {
+        return;
+      }
+      const payload: StoredSession = {
+        ...state,
+        lastUpdated: Date.now(),
+      };
+      window.localStorage.setItem(SESSION_KEY, JSON.stringify(payload));
     },
   });
 

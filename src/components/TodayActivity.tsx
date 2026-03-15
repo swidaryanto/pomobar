@@ -16,9 +16,9 @@ const formatTime = (seconds: number) => {
 
 const TodayActivity: React.FC<TodayActivityProps> = ({ currentTask, timeLeft, sessionLabel }) => {
   return (
-    <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+    <div className="activity">
+      <div className="activity-row">
+        <div className="activity-row-left">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--accent-yellow)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <circle cx="12" cy="12" r="5"></circle>
             <line x1="12" y1="1" x2="12" y2="3"></line>
@@ -30,26 +30,26 @@ const TodayActivity: React.FC<TodayActivityProps> = ({ currentTask, timeLeft, se
             <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
             <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
           </svg>
-          <span style={{ fontSize: '13px', fontWeight: 600, letterSpacing: '0.5px' }}>NOW:</span>
+          <span className="activity-now">NOW:</span>
         </div>
-        <div style={{ backgroundColor: 'rgba(255,255,255,0.1)', padding: '2px 8px', borderRadius: '12px', fontSize: '12px', color: 'var(--text-secondary)' }}>
+        <div className="activity-pill">
           {sessionLabel}
         </div>
       </div>
 
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <div style={{ width: '12px', height: '12px', borderRadius: '50%', border: '1.5px solid var(--text-secondary)', opacity: 0.6 }} />
-          <span style={{ fontSize: '14px', fontWeight: 500 }}>{currentTask}</span>
+      <div className="activity-row">
+        <div className="activity-row-left">
+          <div className="activity-dot" />
+          <span className="activity-task">{currentTask}</span>
         </div>
-        <div style={{ fontSize: '14px', fontWeight: 500 }}>{formatTime(timeLeft)}</div>
+        <div className="activity-time">{formatTime(timeLeft)}</div>
       </div>
 
-      <div style={{ width: '100%', height: '1px', borderBottom: '1px dashed var(--divider)', margin: '8px 0', opacity: 0.5 }} />
+      <div className="activity-divider" />
 
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '16px' }}>
-        <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Timer is live and interactive now</span>
-        <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>v0.1</span>
+      <div className="activity-footer">
+        <span className="activity-footer-text">Timer is live and interactive now</span>
+        <span className="activity-footer-text">v0.1</span>
       </div>
     </div>
   );
