@@ -24,6 +24,7 @@ const DEFAULT_FOCUS_MIN = 25;
 const DEFAULT_BREAK_MIN = 5;
 const DEFAULT_TASK = 'Focus Task';
 const DEFAULT_THEME = 'analog';
+const DEFAULT_DAILY_GOAL = 6;
 const STORAGE_KEY = 'pomobar-preferences';
 const SESSION_KEY = 'pomobar-session';
 type ThemeName = 'dark' | 'analog';
@@ -42,6 +43,7 @@ interface StoredPreferences {
   focusMinutes: number;
   hapticsEnabled: boolean;
   theme: ThemeName;
+  dailyGoal: number;
 }
 
 interface StoredSession {
@@ -75,6 +77,7 @@ const readStoredPreferences = (): StoredPreferences => {
       focusMinutes: DEFAULT_FOCUS_MIN,
       hapticsEnabled: true,
       theme: DEFAULT_THEME,
+      dailyGoal: DEFAULT_DAILY_GOAL,
     };
   }
 
@@ -106,6 +109,10 @@ const readStoredPreferences = (): StoredPreferences => {
       hapticsEnabled:
         typeof parsed.hapticsEnabled === 'boolean' ? parsed.hapticsEnabled : true,
       theme: resolvedTheme,
+      dailyGoal:
+        typeof parsed.dailyGoal === 'number' && parsed.dailyGoal > 0
+          ? Math.round(parsed.dailyGoal)
+          : DEFAULT_DAILY_GOAL,
     };
   } catch {
     return {
@@ -114,6 +121,7 @@ const readStoredPreferences = (): StoredPreferences => {
       focusMinutes: DEFAULT_FOCUS_MIN,
       hapticsEnabled: true,
       theme: DEFAULT_THEME,
+      dailyGoal: DEFAULT_DAILY_GOAL,
     };
   }
 };
@@ -202,6 +210,7 @@ function App() {
   const [focusDraft, setFocusDraft] = useState(String(preferences.focusMinutes));
   const [breakDraft, setBreakDraft] = useState(String(preferences.breakMinutes));
   const [themeDraft, setThemeDraft] = useState<ThemeName>(preferences.theme);
+  const [dailyGoalDraft, setDailyGoalDraft] = useState(String(preferences.dailyGoal));
   const [soundError, setSoundError] = useState<string | null>(null);
   const [completionNote, setCompletionNote] = useState<string | null>(null);
   const [sessionHistory, setSessionHistory] = useState<SessionHistoryMap>(() => {
@@ -215,7 +224,7 @@ function App() {
       return {};
     }
   });
-  const { breakMinutes, currentTask, focusMinutes, hapticsEnabled } = preferences;
+  const { breakMinutes, currentTask, focusMinutes, hapticsEnabled, dailyGoal } = preferences;
   const {
     pomodoroState,
     resetTimer,
@@ -345,6 +354,7 @@ function App() {
 
   useEffect(() => {
     setThemeDraft(preferences.theme);
+    setDailyGoalDraft(String(preferences.dailyGoal));
   }, [preferences.theme]);
 
   useEffect(() => {
@@ -356,6 +366,9 @@ function App() {
 
   const todayKey = new Date().toLocaleDateString('sv-SE');
   const todayHistory = sessionHistory[todayKey] ?? [];
+  const todayFocusSessions = todayHistory.filter((item) => item.type === 'focus').length;
+  const dailyGoalCount = Math.max(1, dailyGoal);
+  const dailyProgress = Math.min(1, todayFocusSessions / dailyGoalCount);
   const weeklySummary = useMemo<WeeklySummary>(() => {
     const now = new Date();
     const keys: string[] = [];
@@ -441,11 +454,13 @@ function App() {
   const handleSettingsSave = () => {
     const resolvedFocus = clampMinutesInput(focusDraft);
     const resolvedBreak = clampMinutesInput(breakDraft);
+    const resolvedGoal = clampMinutesInput(dailyGoalDraft);
 
-    if (!resolvedFocus || !resolvedBreak) {
+    if (!resolvedFocus || !resolvedBreak || !resolvedGoal) {
       setFocusDraft(String(focusMinutes));
       setBreakDraft(String(breakMinutes));
       setThemeDraft(preferences.theme);
+      setDailyGoalDraft(String(preferences.dailyGoal));
       setIsSettingsOpen(false);
       return;
     }
@@ -455,6 +470,7 @@ function App() {
       breakMinutes: resolvedBreak,
       focusMinutes: resolvedFocus,
       theme: themeDraft,
+      dailyGoal: resolvedGoal,
     }));
     updateDurations(resolvedFocus, resolvedBreak);
     resetTimer('focus');
@@ -527,6 +543,9 @@ function App() {
           sessionLabel={sessionLabel}
           history={todayHistory}
           weeklySummary={weeklySummary}
+          dailyGoal={dailyGoalCount}
+          dailyProgress={dailyProgress}
+          focusSessionsToday={todayFocusSessions}
           onClearHistory={() => {
             setSessionHistory({});
             if (typeof window !== 'undefined') {
@@ -559,6 +578,20 @@ function App() {
                   inputMode="numeric"
                   value={breakDraft}
                   onChange={(event) => setBreakDraft(event.target.value)}
+                />
+              </label>
+            </div>
+            <div className="settings-grid">
+              <label className="settings-field" htmlFor="daily-goal-input">
+                <span className="field-label">Daily goal</span>
+                <input
+                  id="daily-goal-input"
+                  className="inline-input"
+                  type="number"
+                  min="1"
+                  inputMode="numeric"
+                  value={dailyGoalDraft}
+                  onChange={(event) => setDailyGoalDraft(event.target.value)}
                 />
               </label>
             </div>
