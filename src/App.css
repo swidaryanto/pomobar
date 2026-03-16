@@ -430,6 +430,29 @@ body[data-theme='analog'] .theme-option.is-active {
   font-size: 12px;
   color: var(--text-secondary);
 }
+
+.activity-weekly {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 10px;
+  gap: 12px;
+}
+
+.activity-weekly-text {
+  font-size: 12px;
+  color: var(--text-secondary);
+  flex: 1;
+}
+
+.activity-clear {
+  font-size: 12px;
+  color: var(--text-secondary);
+  background: transparent;
+  border: 1px solid var(--divider);
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
+}
 .control-button--accent {
   color: var(--accent-yellow);
 }

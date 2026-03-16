@@ -60,6 +60,13 @@ interface SessionHistoryItem {
 
 type SessionHistoryMap = Record<string, SessionHistoryItem[]>;
 
+interface WeeklySummary {
+  totalSessions: number;
+  totalMinutes: number;
+  focusSessions: number;
+  breakSessions: number;
+}
+
 const readStoredPreferences = (): StoredPreferences => {
   if (typeof window === 'undefined') {
     return {
@@ -334,6 +341,35 @@ function App() {
 
   const todayKey = new Date().toLocaleDateString('sv-SE');
   const todayHistory = sessionHistory[todayKey] ?? [];
+  const weeklySummary = useMemo<WeeklySummary>(() => {
+    const now = new Date();
+    const keys: string[] = [];
+    for (let i = 0; i < 7; i += 1) {
+      const day = new Date(now);
+      day.setDate(now.getDate() - i);
+      keys.push(day.toLocaleDateString('sv-SE'));
+    }
+
+    let totalSessions = 0;
+    let totalMinutes = 0;
+    let focusSessions = 0;
+    let breakSessions = 0;
+
+    keys.forEach((key) => {
+      const items = sessionHistory[key] ?? [];
+      items.forEach((item) => {
+        totalSessions += 1;
+        totalMinutes += item.durationMinutes;
+        if (item.type === 'focus') {
+          focusSessions += 1;
+        } else {
+          breakSessions += 1;
+        }
+      });
+    });
+
+    return { totalSessions, totalMinutes, focusSessions, breakSessions };
+  }, [sessionHistory]);
 
   const fireFeedback = async (
     type: Parameters<typeof playFeedbackTone>[0],
@@ -470,6 +506,13 @@ function App() {
           timeLeft={timeLeft}
           sessionLabel={sessionLabel}
           history={todayHistory}
+          weeklySummary={weeklySummary}
+          onClearHistory={() => {
+            setSessionHistory({});
+            if (typeof window !== 'undefined') {
+              window.localStorage.removeItem('pomobar-history');
+            }
+          }}
         />
         {isSettingsOpen ? (
           <div className="inline-panel settings-panel">

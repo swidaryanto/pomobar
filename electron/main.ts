@@ -35,7 +35,7 @@ const createMainWindow = () => {
 
 const loadTrayIcon = (theme: 'light' | 'dark') => {
     const scaleFactor = screen.getPrimaryDisplay().scaleFactor;
-    const size = scaleFactor >= 2 ? 32 : 16;
+    const size = scaleFactor >= 3 ? 64 : scaleFactor >= 2 ? 32 : 16;
     const filename = `tray-${theme}-${size}.svg`;
     const svgPath = path.join(app.getAppPath(), 'electron', 'assets', filename);
 

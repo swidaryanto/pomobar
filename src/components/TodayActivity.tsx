@@ -10,6 +10,13 @@ interface TodayActivityProps {
     durationMinutes: number;
     completedAt: number;
   }>;
+  weeklySummary: {
+    totalSessions: number;
+    totalMinutes: number;
+    focusSessions: number;
+    breakSessions: number;
+  };
+  onClearHistory: () => void;
 }
 
 const formatTime = (seconds: number) => {
@@ -20,11 +27,22 @@ const formatTime = (seconds: number) => {
   return `${m}:${s}`;
 };
 
-const TodayActivity: React.FC<TodayActivityProps> = ({ currentTask, timeLeft, sessionLabel, history }) => {
+const TodayActivity: React.FC<TodayActivityProps> = ({
+  currentTask,
+  timeLeft,
+  sessionLabel,
+  history,
+  weeklySummary,
+  onClearHistory,
+}) => {
   const summary =
     history.length === 0
       ? 'No completed sessions yet.'
       : `${history.length} sessions completed today.`;
+  const weeklyLabel =
+    weeklySummary.totalSessions === 0
+      ? 'No sessions in the past 7 days.'
+      : `Last 7 days: ${weeklySummary.totalSessions} sessions · ${weeklySummary.totalMinutes}m (Focus ${weeklySummary.focusSessions} / Break ${weeklySummary.breakSessions})`;
 
   return (
     <div className="activity">
@@ -71,6 +89,13 @@ const TodayActivity: React.FC<TodayActivityProps> = ({ currentTask, timeLeft, se
             </div>
           ))
         )}
+      </div>
+
+      <div className="activity-weekly">
+        <span className="activity-weekly-text">{weeklyLabel}</span>
+        <button className="activity-clear" onClick={onClearHistory}>
+          Clear history
+        </button>
       </div>
 
       <div className="activity-footer">
