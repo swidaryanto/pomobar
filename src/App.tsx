@@ -203,6 +203,7 @@ function App() {
   const [breakDraft, setBreakDraft] = useState(String(preferences.breakMinutes));
   const [themeDraft, setThemeDraft] = useState<ThemeName>(preferences.theme);
   const [soundError, setSoundError] = useState<string | null>(null);
+  const [completionNote, setCompletionNote] = useState<string | null>(null);
   const [sessionHistory, setSessionHistory] = useState<SessionHistoryMap>(() => {
     if (typeof window === 'undefined') {
       return {};
@@ -246,6 +247,10 @@ function App() {
           });
         }
       }
+
+      const completedLabel = completedSession === 'focus' ? 'Focus' : 'Break';
+      const nextLabel = nextSession === 'focus' ? 'Focus' : 'Break';
+      setCompletionNote(`${completedLabel} complete · Next: ${nextLabel}`);
 
       const now = Date.now();
       const dateKey = new Date(now).toLocaleDateString('sv-SE');
@@ -318,6 +323,16 @@ function App() {
       window.removeEventListener('keydown', unlockAudio);
     };
   }, []);
+
+  useEffect(() => {
+    if (!completionNote) {
+      return;
+    }
+    const timeout = window.setTimeout(() => {
+      setCompletionNote(null);
+    }, 2200);
+    return () => window.clearTimeout(timeout);
+  }, [completionNote]);
 
   useEffect(() => {
     setTaskDraft(currentTask);
@@ -501,6 +516,11 @@ function App() {
       </div>
 
       <div className="card activity-card">
+        {completionNote ? (
+          <div className="completion-toast" role="status" aria-live="polite">
+            {completionNote}
+          </div>
+        ) : null}
         <TodayActivity
           currentTask={currentTask}
           timeLeft={timeLeft}

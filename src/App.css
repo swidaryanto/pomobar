@@ -157,6 +157,7 @@ body[data-theme='analog'] .top-card {
   display: flex;
   flex-direction: column;
   padding: 16px;
+  position: relative;
 }
 
 .inline-panel {
@@ -401,6 +402,54 @@ body[data-theme='analog'] .theme-option.is-active {
 .activity-footer-text {
   font-size: 12px;
   color: var(--text-secondary);
+}
+
+.completion-toast {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  right: 12px;
+  padding: 8px 10px;
+  border-radius: var(--radius-sm);
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+  font-size: 12px;
+  letter-spacing: 0.02em;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  box-shadow: var(--shadow-button);
+  animation: completion-toast 2.2s ease-out forwards;
+  pointer-events: none;
+}
+
+body[data-theme='analog'] .completion-toast {
+  background: #f7f4ee;
+}
+
+@keyframes completion-toast {
+  0% {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  15% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  80% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .completion-toast {
+    animation: none;
+    opacity: 1;
+  }
 }
 
 .activity-history {
