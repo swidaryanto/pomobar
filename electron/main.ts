@@ -7,6 +7,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 let mainWindow: BrowserWindow | null = null;
 let tray: Tray | null = null;
+let trayTheme: 'light' | 'dark' = 'dark';
 
 const createMainWindow = () => {
     mainWindow = new BrowserWindow({
@@ -32,25 +33,38 @@ const createMainWindow = () => {
     });
 };
 
+const loadTrayIcon = (theme: 'light' | 'dark') => {
+    const scaleFactor = screen.getPrimaryDisplay().scaleFactor;
+    const size = scaleFactor >= 2 ? 32 : 16;
+    const filename = `tray-${theme}-${size}.svg`;
+    const svgPath = path.join(app.getAppPath(), 'electron', 'assets', filename);
+
+    try {
+        const svgContent = fs.readFileSync(svgPath, 'utf-8');
+        return nativeImage
+            .createFromDataURL(`data:image/svg+xml;base64,${Buffer.from(svgContent).toString('base64')}`)
+            .resize({ width: size, height: size });
+    } catch {
+        return nativeImage
+            .createFromDataURL(
+                `data:image/svg+xml;base64,${Buffer.from(
+                    '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16"><rect x="3" y="2" width="10" height="12" rx="2" fill="#111111"/><rect x="5" y="4" width="6" height="6" rx="1" fill="#f5f5f5"/></svg>'
+                ).toString('base64')}`
+            )
+            .resize({ width: 16, height: 16 });
+    }
+};
+
+const applyTrayIcon = () => {
+    if (!tray) {
+        return;
+    }
+    const icon = loadTrayIcon(trayTheme);
+    tray.setImage(icon);
+};
+
 const createTray = () => {
-    const icon = (() => {
-        const svgPath = path.join(app.getAppPath(), 'electron', 'assets', 'trayTemplate.svg');
-        try {
-            const svgContent = fs.readFileSync(svgPath, 'utf-8');
-            return nativeImage
-                .createFromDataURL(`data:image/svg+xml;base64,${Buffer.from(svgContent).toString('base64')}`)
-                .resize({ width: 16, height: 16 });
-        } catch {
-            return nativeImage
-                .createFromDataURL(
-                    `data:image/svg+xml;base64,${Buffer.from(
-                        '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16"><rect x="3" y="2" width="10" height="12" rx="2" fill="black"/><rect x="5" y="4" width="6" height="6" rx="1" fill="white"/></svg>'
-                    ).toString('base64')}`
-                )
-                .resize({ width: 16, height: 16 });
-        }
-    })();
-    icon.setTemplateImage(true);
+    const icon = loadTrayIcon(trayTheme);
 
     tray = new Tray(icon);
     tray.setTitle('Pomobar');
@@ -115,4 +129,9 @@ ipcMain.on('play-feedback', () => {
 
 ipcMain.on('quit-app', () => {
     app.quit();
+});
+
+ipcMain.on('set-tray-theme', (_, theme: 'light' | 'dark') => {
+    trayTheme = theme;
+    applyTrayIcon();
 });

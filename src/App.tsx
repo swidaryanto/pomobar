@@ -15,6 +15,7 @@ declare global {
       updateTimer: (time: string) => void;
       playFeedback: () => void;
       quitApp: () => void;
+      setTrayTheme: (theme: 'light' | 'dark') => void;
     };
   }
 }
@@ -49,6 +50,15 @@ interface StoredSession {
   timeLeft: number;
   lastUpdated: number;
 }
+
+interface SessionHistoryItem {
+  id: string;
+  type: 'focus' | 'break';
+  durationMinutes: number;
+  completedAt: number;
+}
+
+type SessionHistoryMap = Record<string, SessionHistoryItem[]>;
 
 const readStoredPreferences = (): StoredPreferences => {
   if (typeof window === 'undefined') {
@@ -186,6 +196,17 @@ function App() {
   const [breakDraft, setBreakDraft] = useState(String(preferences.breakMinutes));
   const [themeDraft, setThemeDraft] = useState<ThemeName>(preferences.theme);
   const [soundError, setSoundError] = useState<string | null>(null);
+  const [sessionHistory, setSessionHistory] = useState<SessionHistoryMap>(() => {
+    if (typeof window === 'undefined') {
+      return {};
+    }
+    try {
+      const raw = window.localStorage.getItem('pomobar-history');
+      return raw ? (JSON.parse(raw) as SessionHistoryMap) : {};
+    } catch {
+      return {};
+    }
+  });
   const { breakMinutes, currentTask, focusMinutes, hapticsEnabled } = preferences;
   const {
     pomodoroState,
@@ -218,6 +239,26 @@ function App() {
           });
         }
       }
+
+      const now = Date.now();
+      const dateKey = new Date(now).toLocaleDateString('sv-SE');
+      const durationMinutes = completedSession === 'focus' ? focusMinutes : breakMinutes;
+      const item: SessionHistoryItem = {
+        id: `${now}-${completedSession}`,
+        type: completedSession,
+        durationMinutes,
+        completedAt: now,
+      };
+      setSessionHistory((previous) => {
+        const next = { ...previous };
+        const day = next[dateKey] ? [...next[dateKey]] : [];
+        day.unshift(item);
+        next[dateKey] = day.slice(0, 20);
+        if (typeof window !== 'undefined') {
+          window.localStorage.setItem('pomobar-history', JSON.stringify(next));
+        }
+        return next;
+      });
     },
     onStateChange: (state) => {
       if (typeof window === 'undefined') {
@@ -246,6 +287,9 @@ function App() {
     }
 
     document.body.dataset.theme = themeDraft;
+    if (window.electronAPI) {
+      window.electronAPI.setTrayTheme(themeDraft === 'dark' ? 'light' : 'dark');
+    }
 
     return () => {
       delete document.body.dataset.theme;
@@ -287,6 +331,9 @@ function App() {
       window.electronAPI.updateTimer(timeString);
     }
   }, [timeLeft, currentTask]);
+
+  const todayKey = new Date().toLocaleDateString('sv-SE');
+  const todayHistory = sessionHistory[todayKey] ?? [];
 
   const fireFeedback = async (
     type: Parameters<typeof playFeedbackTone>[0],
@@ -418,7 +465,12 @@ function App() {
       </div>
 
       <div className="card activity-card">
-        <TodayActivity currentTask={currentTask} timeLeft={timeLeft} sessionLabel={sessionLabel} />
+        <TodayActivity
+          currentTask={currentTask}
+          timeLeft={timeLeft}
+          sessionLabel={sessionLabel}
+          history={todayHistory}
+        />
         {isSettingsOpen ? (
           <div className="inline-panel settings-panel">
             <div className="settings-grid">

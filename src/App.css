@@ -402,6 +402,34 @@ body[data-theme='analog'] .theme-option.is-active {
   font-size: 12px;
   color: var(--text-secondary);
 }
+
+.activity-history {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.activity-history-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.activity-history-type {
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+.activity-history-meta {
+  opacity: 0.8;
+}
+
+.activity-history-empty {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
 .control-button--accent {
   color: var(--accent-yellow);
 }

@@ -4,6 +4,12 @@ interface TodayActivityProps {
   currentTask: string;
   timeLeft: number;
   sessionLabel: string;
+  history: Array<{
+    id: string;
+    type: 'focus' | 'break';
+    durationMinutes: number;
+    completedAt: number;
+  }>;
 }
 
 const formatTime = (seconds: number) => {
@@ -14,7 +20,12 @@ const formatTime = (seconds: number) => {
   return `${m}:${s}`;
 };
 
-const TodayActivity: React.FC<TodayActivityProps> = ({ currentTask, timeLeft, sessionLabel }) => {
+const TodayActivity: React.FC<TodayActivityProps> = ({ currentTask, timeLeft, sessionLabel, history }) => {
+  const summary =
+    history.length === 0
+      ? 'No completed sessions yet.'
+      : `${history.length} sessions completed today.`;
+
   return (
     <div className="activity">
       <div className="activity-row">
@@ -47,8 +58,23 @@ const TodayActivity: React.FC<TodayActivityProps> = ({ currentTask, timeLeft, se
 
       <div className="activity-divider" />
 
+      <div className="activity-history">
+        {history.length === 0 ? (
+          <div className="activity-history-empty">{summary}</div>
+        ) : (
+          history.slice(0, 4).map((item) => (
+            <div key={item.id} className="activity-history-row">
+              <span className="activity-history-type">{item.type.toUpperCase()}</span>
+              <span className="activity-history-meta">
+                {item.durationMinutes}m · {new Date(item.completedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+              </span>
+            </div>
+          ))
+        )}
+      </div>
+
       <div className="activity-footer">
-        <span className="activity-footer-text">Timer is live and interactive now</span>
+        <span className="activity-footer-text">{summary}</span>
         <span className="activity-footer-text">v0.1</span>
       </div>
     </div>
