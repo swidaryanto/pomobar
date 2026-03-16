@@ -452,6 +452,7 @@ body[data-theme='analog'] .theme-option.is-active {
   border: 1px solid var(--divider);
   padding: 4px 8px;
   border-radius: var(--radius-sm);
+  white-space: nowrap;
 }
 .control-button--accent {
   color: var(--accent-yellow);
