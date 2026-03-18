@@ -2,9 +2,9 @@
   display: flex;
   flex-direction: column;
   min-height: 100vh;
-  gap: 12px;
+  gap: 0;
   background-color: var(--bg-primary);
-  padding: 12px;
+  padding: 0;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
 }
@@ -12,7 +12,7 @@
 .app-container.electron {
   -webkit-app-region: no-drag;
   background-color: transparent;
-  padding: 0 0 12px;
+  padding: 0;
 }
 
 .drag-region {
@@ -56,7 +56,7 @@ button:active {
 
 .card {
   background-color: var(--bg-secondary);
-  border-radius: var(--radius-md);
+  border-radius: 0;
   box-shadow: none;
 }
 
