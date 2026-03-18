@@ -274,17 +274,21 @@ body[data-theme='analog'] .theme-option.is-active {
 
 .controls-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr) minmax(0, 1fr);
+  grid-template-columns: repeat(3, 36px);
   gap: 8px;
+  justify-content: end;
+  align-items: center;
 }
 
 .control-button {
   background-color: var(--bg-tertiary);
   color: var(--text-primary);
-  font-size: 20px;
-  padding: 12px 0;
-  border-radius: var(--radius-md);
-  box-shadow: var(--shadow-button);
+  font-size: 18px;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  border: 1px solid var(--divider);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), var(--shadow-button);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -300,25 +304,27 @@ body[data-theme='analog'] .theme-option.is-active {
   background-color: transparent;
   color: var(--text-secondary);
   font-size: 12px;
-  padding: 8px 0;
-  border-radius: var(--radius-md);
+  padding: 6px 0;
+  border-radius: 10px;
   border: 1px solid var(--divider);
+  background: rgba(255, 255, 255, 0.04);
 }
 
 .footer-actions {
   display: flex;
   justify-content: center;
   margin-top: auto;
-  padding-top: 16px;
+  padding-top: 12px;
 }
 
 .footer-actions-panel {
   background-color: var(--bg-tertiary);
-  border-radius: var(--radius-md);
-  padding: 8px 12px;
+  border-radius: 12px;
+  padding: 6px 10px;
   display: flex;
-  gap: 12px;
-  box-shadow: var(--shadow-button);
+  gap: 10px;
+  border: 1px solid var(--divider);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), var(--shadow-button);
 }
 
 .footer-actions-button {
@@ -330,6 +336,8 @@ body[data-theme='analog'] .theme-option.is-active {
   font-size: 11px;
   font-weight: 500;
   white-space: nowrap;
+  padding: 4px 6px;
+  border-radius: 8px;
 }
 
 .footer-actions-button.is-muted {
@@ -337,7 +345,7 @@ body[data-theme='analog'] .theme-option.is-active {
 }
 
 .footer-actions-icon {
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 300;
 }
 
@@ -607,22 +615,46 @@ body[data-theme='analog'] .timer-ticks {
 }
 
 body[data-theme='analog'] .controls-grid {
-  grid-template-columns: repeat(3, 34px);
+  grid-template-columns: repeat(3, 30px);
   justify-content: end;
   align-items: center;
+  gap: 6px;
 }
 
 body[data-theme='analog'] .control-button {
-  width: 34px;
-  height: 34px;
+  width: 30px;
+  height: 30px;
   padding: 0;
-  border-radius: 999px;
-  font-size: 16px;
+  border-radius: 8px;
+  font-size: 14px;
+  background: #f7f4ee;
+  border: 1px solid #d2cbc2;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8),
+    0 1px 2px rgba(0, 0, 0, 0.08);
 }
 
 body[data-theme='analog'] .control-reset {
   font-size: 11px;
-  padding: 6px 0;
+  padding: 5px 0;
+  border-radius: 8px;
+  border-color: #d2cbc2;
+  background: rgba(255, 255, 255, 0.6);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
+}
+
+body[data-theme='analog'] .footer-actions-panel {
+  background: #e7e1d9;
+  border-color: #cdc6bd;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7),
+    0 1px 2px rgba(0, 0, 0, 0.08);
+}
+
+body[data-theme='analog'] .footer-actions-button {
+  color: #4b4741;
+}
+
+body[data-theme='analog'] .footer-actions-button.is-muted {
+  opacity: 0.5;
 }
 
 .inline-input {
