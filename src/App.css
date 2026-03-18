@@ -178,7 +178,7 @@ body[data-theme='analog'] .inline-panel {
 }
 
 .settings-panel {
-  margin-top: 8px;
+  margin: 8px 4px 0;
 }
 
 .settings-grid {
@@ -314,7 +314,7 @@ body[data-theme='analog'] .theme-option.is-active {
   display: flex;
   justify-content: center;
   margin-top: auto;
-  padding-top: 12px;
+  padding: 12px 4px 6px;
 }
 
 .footer-actions-panel {
@@ -469,7 +469,8 @@ body[data-theme='analog'] .theme-option.is-active {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-top: 16px;
+  margin-top: 12px;
+  margin-bottom: 6px;
 }
 
 .activity-footer-text {
