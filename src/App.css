@@ -166,6 +166,7 @@ body[data-theme='analog'] .top-card {
   flex-direction: column;
   gap: 8px;
   padding: 8px;
+  margin: 0 6px;
   border: 1px solid var(--divider);
   border-radius: var(--radius-md);
   background: rgba(255, 255, 255, 0.03);
@@ -178,7 +179,7 @@ body[data-theme='analog'] .inline-panel {
 }
 
 .settings-panel {
-  margin: 8px 4px 0;
+  margin: 8px 6px 0;
 }
 
 .settings-grid {
