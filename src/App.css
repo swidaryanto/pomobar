@@ -323,7 +323,7 @@ body[data-theme='analog'] .theme-option.is-active {
   padding: 6px 10px;
   display: flex;
   gap: 10px;
-  margin: 6px;
+  margin: 12px;
   border: 1px solid var(--divider);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), var(--shadow-button);
 }
