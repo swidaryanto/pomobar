@@ -142,7 +142,6 @@ const TodayActivity: React.FC<TodayActivityProps> = ({
       </div>
 
       <div className="activity-footer">
-        <span className="activity-footer-text">{summary}</span>
         <span className="activity-footer-text">v0.1</span>
       </div>
     </div>
