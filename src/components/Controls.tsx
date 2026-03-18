@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import type { HapticType } from '../lib/haptics';
 import type { PomodoroState } from '../hooks/usePomodoroTimer';
 
@@ -20,6 +20,15 @@ const Controls: React.FC<ControlsProps> = ({
   onPlayFeedback,
 }) => {
   const [isPlayPulse, setIsPlayPulse] = useState(false);
+  const pulseTimeoutRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (pulseTimeoutRef.current) {
+        window.clearTimeout(pulseTimeoutRef.current);
+      }
+    };
+  }, []);
 
   const adjustTime = (minutes: number) => {
     onHaptic('light');
@@ -34,7 +43,10 @@ const Controls: React.FC<ControlsProps> = ({
     if (nextState === 'running') {
       onPlayFeedback();
       setIsPlayPulse(true);
-      setTimeout(() => setIsPlayPulse(false), 180);
+      if (pulseTimeoutRef.current) {
+        window.clearTimeout(pulseTimeoutRef.current);
+      }
+      pulseTimeoutRef.current = window.setTimeout(() => setIsPlayPulse(false), 180);
     }
   };
 

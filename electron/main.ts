@@ -18,6 +18,10 @@ const createMainWindow = () => {
         resizable: false,
         transparent: true,
         webPreferences: {
+            contextIsolation: true,
+            nodeIntegration: false,
+            sandbox: true,
+            enableRemoteModule: false,
             preload: path.join(__dirname, 'preload.js'),
         },
     });
@@ -33,8 +37,7 @@ const createMainWindow = () => {
     });
 };
 
-const loadTrayIcon = (theme: 'light' | 'dark') => {
-    const scaleFactor = screen.getPrimaryDisplay().scaleFactor;
+const loadTrayIcon = (theme: 'light' | 'dark', scaleFactor: number) => {
     const size = scaleFactor >= 3 ? 64 : scaleFactor >= 2 ? 32 : 16;
     const filename = `tray-${theme}-${size}.svg`;
     const svgPath = path.join(app.getAppPath(), 'electron', 'assets', filename);
@@ -59,14 +62,14 @@ const applyTrayIcon = () => {
     if (!tray) {
         return;
     }
-    const icon = loadTrayIcon(trayTheme);
+    const bounds = tray.getBounds();
+    const display = screen.getDisplayNearestPoint({ x: bounds.x, y: bounds.y });
+    const icon = loadTrayIcon(trayTheme, display.scaleFactor);
     tray.setImage(icon);
 };
 
 const createTray = () => {
-    const icon = loadTrayIcon(trayTheme);
-
-    tray = new Tray(icon);
+    tray = new Tray(loadTrayIcon(trayTheme, screen.getPrimaryDisplay().scaleFactor));
     tray.setTitle('Pomobar');
     tray.setToolTip('Pomobar');
 
@@ -86,6 +89,7 @@ const createTray = () => {
         if (mainWindow.isVisible()) {
             mainWindow.hide();
         } else {
+            applyTrayIcon();
             const trayBounds = tray?.getBounds() || bounds;
             const { x, y, width: trayWidth, height: trayHeight } = trayBounds;
             const { width, height } = mainWindow.getBounds();

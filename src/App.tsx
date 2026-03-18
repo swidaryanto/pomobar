@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Header from './components/Header';
 import Timer from './components/Timer';
 import Controls from './components/Controls';
@@ -8,17 +8,6 @@ import { triggerHaptic } from './lib/haptics';
 import { getFeedbackState, playFeedbackTone, testFeedbackTone } from './lib/feedback';
 import { usePomodoroTimer } from './hooks/usePomodoroTimer';
 import './App.css';
-
-declare global {
-  interface Window {
-    electronAPI?: {
-      updateTimer: (time: string) => void;
-      playFeedback: () => void;
-      quitApp: () => void;
-      setTrayTheme: (theme: 'light' | 'dark') => void;
-    };
-  }
-}
 
 const DEFAULT_FOCUS_MIN = 25;
 const DEFAULT_BREAK_MIN = 5;
@@ -225,6 +214,13 @@ function App() {
     }
   });
   const { breakMinutes, currentTask, focusMinutes, hapticsEnabled, dailyGoal } = preferences;
+  const lastSessionPersistAtRef = useRef(0);
+  const pendingSessionPersistRef = useRef<number | null>(null);
+  const latestSessionStateRef = useRef<{
+    sessionType: 'focus' | 'break';
+    timeLeft: number;
+    pomodoroState: 'idle' | 'running' | 'paused';
+  } | null>(null);
   const {
     pomodoroState,
     resetTimer,
@@ -247,12 +243,22 @@ function App() {
       })();
 
       if (typeof window !== 'undefined' && 'Notification' in window) {
-        if (Notification.permission === 'granted') {
+        const notify = () => {
           const completedLabel = completedSession === 'focus' ? 'Focus' : 'Break';
           const nextLabel = nextSession === 'focus' ? 'Focus' : 'Break';
 
           new Notification(`${completedLabel} done`, {
             body: `Next: ${nextLabel} session`,
+          });
+        };
+
+        if (Notification.permission === 'granted') {
+          notify();
+        } else if (Notification.permission === 'default') {
+          void Notification.requestPermission().then((permission) => {
+            if (permission === 'granted') {
+              notify();
+            }
           });
         }
       }
@@ -285,11 +291,41 @@ function App() {
       if (typeof window === 'undefined') {
         return;
       }
-      const payload: StoredSession = {
-        ...state,
-        lastUpdated: Date.now(),
+      latestSessionStateRef.current = state;
+      const now = Date.now();
+
+      const write = (lastUpdated: number) => {
+        const latest = latestSessionStateRef.current ?? state;
+        const payload: StoredSession = {
+          ...latest,
+          lastUpdated,
+        };
+        window.localStorage.setItem(SESSION_KEY, JSON.stringify(payload));
+        lastSessionPersistAtRef.current = lastUpdated;
+        if (pendingSessionPersistRef.current) {
+          window.clearTimeout(pendingSessionPersistRef.current);
+          pendingSessionPersistRef.current = null;
+        }
       };
-      window.localStorage.setItem(SESSION_KEY, JSON.stringify(payload));
+
+      if (state.pomodoroState !== 'running') {
+        write(now);
+        return;
+      }
+
+      const elapsed = now - lastSessionPersistAtRef.current;
+      const throttleMs = 5000;
+
+      if (elapsed >= throttleMs) {
+        write(now);
+        return;
+      }
+
+      if (!pendingSessionPersistRef.current) {
+        pendingSessionPersistRef.current = window.setTimeout(() => {
+          write(Date.now());
+        }, throttleMs - elapsed);
+      }
     },
   });
 
@@ -301,6 +337,14 @@ function App() {
   useEffect(() => {
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(preferences));
   }, [preferences]);
+
+  useEffect(() => {
+    return () => {
+      if (pendingSessionPersistRef.current) {
+        window.clearTimeout(pendingSessionPersistRef.current);
+      }
+    };
+  }, []);
 
   useEffect(() => {
     if (typeof document === 'undefined') {
@@ -355,7 +399,7 @@ function App() {
   useEffect(() => {
     setThemeDraft(preferences.theme);
     setDailyGoalDraft(String(preferences.dailyGoal));
-  }, [preferences.theme]);
+  }, [preferences.dailyGoal, preferences.theme]);
 
   useEffect(() => {
     const timeString = `${currentTask} | ${formatTime(timeLeft)}`;
@@ -399,7 +443,7 @@ function App() {
     return { totalSessions, totalMinutes, focusSessions, breakSessions };
   }, [sessionHistory]);
 
-  const fireFeedback = async (
+  const fireFeedback = useCallback(async (
     type: Parameters<typeof playFeedbackTone>[0],
     options: { enabledOverride?: boolean; showError?: boolean } = {}
   ) => {
@@ -433,7 +477,7 @@ function App() {
     }
 
     setSoundError(null);
-  };
+  }, [hapticsEnabled]);
 
   const handleTaskSave = () => {
     const nextTask = taskDraft.trim();
@@ -547,6 +591,12 @@ function App() {
           dailyProgress={dailyProgress}
           focusSessionsToday={todayFocusSessions}
           onClearHistory={() => {
+            if (typeof window !== 'undefined') {
+              const confirmed = window.confirm('Clear today history? This cannot be undone.');
+              if (!confirmed) {
+                return;
+              }
+            }
             setSessionHistory({});
             if (typeof window !== 'undefined') {
               window.localStorage.removeItem('pomobar-history');

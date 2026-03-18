@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 export type PomodoroState = 'idle' | 'running' | 'paused';
 export type SessionType = 'focus' | 'break';
@@ -37,6 +37,7 @@ export function usePomodoroTimer({
   const [pomodoroState, setPomodoroState] = useState<PomodoroState>(
     initialState?.pomodoroState ?? 'idle'
   );
+  const lastTickRef = useRef<number | null>(null);
 
   const getDuration = useCallback(
     (session: SessionType) => toSeconds(session === 'focus' ? focusMinutes : breakMinutes),
@@ -78,15 +79,28 @@ export function usePomodoroTimer({
       return;
     }
 
+    lastTickRef.current = Date.now();
+
     const interval = window.setInterval(() => {
+      const now = Date.now();
+      const lastTick = lastTickRef.current ?? now;
+      const elapsedSeconds = Math.floor((now - lastTick) / 1000);
+
+      if (elapsedSeconds <= 0) {
+        return;
+      }
+
+      lastTickRef.current = now;
+
       setTimeLeft((previousTime) => {
-        if (previousTime <= 1) {
+        const nextTime = previousTime - elapsedSeconds;
+        if (nextTime <= 0) {
           window.clearInterval(interval);
           switchSession();
           return 0;
         }
 
-        return previousTime - 1;
+        return nextTime;
       });
     }, 1000);
 
