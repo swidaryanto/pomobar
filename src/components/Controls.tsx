@@ -52,8 +52,8 @@ const Controls: React.FC<ControlsProps> = ({
 
   return (
     <div className="controls-grid">
-      <button className="control-button" onClick={() => adjustTime(-5)}>
-        −
+      <button className="control-button" onClick={() => adjustTime(-5)} aria-label="Decrease 5 minutes">
+        −5
       </button>
 
       <button
@@ -72,8 +72,8 @@ const Controls: React.FC<ControlsProps> = ({
         )}
       </button>
 
-      <button className="control-button" onClick={() => adjustTime(5)}>
-        ＋
+      <button className="control-button" onClick={() => adjustTime(5)} aria-label="Increase 5 minutes">
+        +5
       </button>
 
       <button

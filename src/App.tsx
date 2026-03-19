@@ -195,6 +195,7 @@ function App() {
   const [preferences, setPreferences] = useState(initialPreferences);
   const [isEditingTask, setIsEditingTask] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isActivityExpanded, setIsActivityExpanded] = useState(false);
   const [taskDraft, setTaskDraft] = useState(preferences.currentTask);
   const [focusDraft, setFocusDraft] = useState(String(preferences.focusMinutes));
   const [breakDraft, setBreakDraft] = useState(String(preferences.breakMinutes));
@@ -202,6 +203,10 @@ function App() {
   const [dailyGoalDraft, setDailyGoalDraft] = useState(String(preferences.dailyGoal));
   const [soundError, setSoundError] = useState<string | null>(null);
   const [completionNote, setCompletionNote] = useState<string | null>(null);
+  const [completionAction, setCompletionAction] = useState<{
+    completedSession: 'focus' | 'break';
+    nextSession: 'focus' | 'break';
+  } | null>(null);
   const [sessionHistory, setSessionHistory] = useState<SessionHistoryMap>(() => {
     if (typeof window === 'undefined') {
       return {};
@@ -266,6 +271,7 @@ function App() {
       const completedLabel = completedSession === 'focus' ? 'Focus' : 'Break';
       const nextLabel = nextSession === 'focus' ? 'Focus' : 'Break';
       setCompletionNote(`${completedLabel} complete · Next: ${nextLabel}`);
+      setCompletionAction({ completedSession, nextSession });
 
       const now = Date.now();
       const dateKey = new Date(now).toLocaleDateString('sv-SE');
@@ -333,6 +339,8 @@ function App() {
     () => (sessionType === 'focus' ? 'Focus' : 'Break'),
     [sessionType]
   );
+  const nextSessionLabel = sessionType === 'focus' ? 'Break' : 'Focus';
+  const nextSessionMinutes = sessionType === 'focus' ? breakMinutes : focusMinutes;
 
   useEffect(() => {
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(preferences));
@@ -361,6 +369,42 @@ function App() {
     };
   }, [themeDraft]);
 
+  const fireFeedback = useCallback(async (
+    type: Parameters<typeof playFeedbackTone>[0],
+    options: { enabledOverride?: boolean; showError?: boolean } = {}
+  ) => {
+    const enabled = options.enabledOverride ?? hapticsEnabled;
+    if (!enabled) {
+      if (options.showError) {
+        setSoundError('Feedback is off.');
+      }
+      return;
+    }
+
+    triggerHaptic(type, enabled);
+    const played = await playFeedbackTone(type, enabled);
+    if (played) {
+      setSoundError(null);
+      return;
+    }
+
+    if (window.electronAPI) {
+      window.electronAPI.playFeedback();
+      setSoundError(null);
+      return;
+    }
+
+    const fallback = await testFeedbackTone();
+    if (!fallback.ok) {
+      if (options.showError) {
+        setSoundError('Feedback is blocked by the browser.');
+      }
+      return;
+    }
+
+    setSoundError(null);
+  }, [hapticsEnabled]);
+
   useEffect(() => {
     const unlockAudio = () => {
       void testFeedbackTone();
@@ -378,12 +422,58 @@ function App() {
   }, []);
 
   useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      const target = event.target as HTMLElement | null;
+      if (
+        target &&
+        (target.tagName === 'INPUT' ||
+          target.tagName === 'TEXTAREA' ||
+          target.isContentEditable)
+      ) {
+        return;
+      }
+
+      if (event.key === ' ') {
+        event.preventDefault();
+        setPomodoroState((previous) => (previous === 'running' ? 'paused' : 'running'));
+        void fireFeedback('medium');
+        return;
+      }
+
+      if (event.key === 'ArrowUp') {
+        event.preventDefault();
+        setTimeLeft((previous) => Math.max(0, previous + 5 * 60));
+        void fireFeedback('light');
+        return;
+      }
+
+      if (event.key === 'ArrowDown') {
+        event.preventDefault();
+        setTimeLeft((previous) => Math.max(0, previous - 5 * 60));
+        void fireFeedback('light');
+        return;
+      }
+
+      if (event.key === ',' && (event.metaKey || event.ctrlKey)) {
+        event.preventDefault();
+        setIsEditingTask(false);
+        setIsSettingsOpen((previous) => !previous);
+        void fireFeedback('light');
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [fireFeedback, setPomodoroState, setTimeLeft]);
+
+  useEffect(() => {
     if (!completionNote) {
       return;
     }
     const timeout = window.setTimeout(() => {
       setCompletionNote(null);
-    }, 2200);
+      setCompletionAction(null);
+    }, 6000);
     return () => window.clearTimeout(timeout);
   }, [completionNote]);
 
@@ -443,42 +533,6 @@ function App() {
     return { totalSessions, totalMinutes, focusSessions, breakSessions };
   }, [sessionHistory]);
 
-  const fireFeedback = useCallback(async (
-    type: Parameters<typeof playFeedbackTone>[0],
-    options: { enabledOverride?: boolean; showError?: boolean } = {}
-  ) => {
-    const enabled = options.enabledOverride ?? hapticsEnabled;
-    if (!enabled) {
-      if (options.showError) {
-        setSoundError('Sound is off.');
-      }
-      return;
-    }
-
-    triggerHaptic(type, enabled);
-    const played = await playFeedbackTone(type, enabled);
-    if (played) {
-      setSoundError(null);
-      return;
-    }
-
-    if (window.electronAPI) {
-      window.electronAPI.playFeedback();
-      setSoundError(null);
-      return;
-    }
-
-    const fallback = await testFeedbackTone();
-    if (!fallback.ok) {
-      if (options.showError) {
-        setSoundError('Sound is blocked by the browser.');
-      }
-      return;
-    }
-
-    setSoundError(null);
-  }, [hapticsEnabled]);
-
   const handleTaskSave = () => {
     const nextTask = taskDraft.trim();
     if (!nextTask) {
@@ -493,6 +547,11 @@ function App() {
     }));
     setIsEditingTask(false);
     void fireFeedback('light');
+  };
+
+  const handleTaskCancel = () => {
+    setTaskDraft(currentTask);
+    setIsEditingTask(false);
   };
 
   const handleSettingsSave = () => {
@@ -529,7 +588,23 @@ function App() {
       <div className="card top-card">
         <Header />
         <div className="timer-layout">
-          <Timer timeLeft={timeLeft} currentTask={`${sessionLabel}: ${currentTask}`} />
+          <Timer
+            timeLeft={timeLeft}
+            currentTask={currentTask}
+            sessionLabel={sessionLabel}
+            nextSessionLabel={nextSessionLabel}
+            nextSessionMinutes={nextSessionMinutes}
+            isEditingTask={isEditingTask}
+            taskDraft={taskDraft}
+            onTaskChange={setTaskDraft}
+            onTaskEditStart={() => {
+              setIsSettingsOpen(false);
+              setIsEditingTask(true);
+              void fireFeedback('light');
+            }}
+            onTaskSave={handleTaskSave}
+            onTaskCancel={handleTaskCancel}
+          />
           <Controls
             setTimeLeft={setTimeLeft}
             pomodoroState={pomodoroState}
@@ -543,66 +618,89 @@ function App() {
             }}
           />
         </div>
-        {isEditingTask ? (
-          <div className="inline-panel">
-            <label className="field-label" htmlFor="task-name-input">
-              Current task
-            </label>
-            <input
-              id="task-name-input"
-              className="inline-input"
-              type="text"
-              value={taskDraft}
-              onChange={(event) => setTaskDraft(event.target.value)}
-              maxLength={60}
-              autoFocus
-            />
-            <div className="inline-panel-actions">
-              <button
-                className="secondary-button"
-                onClick={() => {
-                  setTaskDraft(currentTask);
-                  setIsEditingTask(false);
-                }}
-              >
-                Cancel
-              </button>
-              <button className="primary-button" onClick={handleTaskSave}>
-                Save task
-              </button>
-            </div>
-          </div>
-        ) : null}
       </div>
 
       <div className="card activity-card">
         {completionNote ? (
           <div className="completion-toast" role="status" aria-live="polite">
-            {completionNote}
+            <span>{completionNote}</span>
+            {completionAction ? (
+              <div className="completion-toast-actions">
+                <button
+                  className="completion-toast-button primary"
+                  onClick={() => {
+                    setCompletionNote(null);
+                    setCompletionAction(null);
+                    setPomodoroState('running');
+                    void fireFeedback('medium');
+                  }}
+                >
+                  Start next
+                </button>
+                {completionAction.nextSession === 'break' ? (
+                  <button
+                    className="completion-toast-button"
+                    onClick={() => {
+                      setCompletionNote(null);
+                      setCompletionAction(null);
+                      resetTimer('focus');
+                      setPomodoroState('running');
+                      void fireFeedback('medium');
+                    }}
+                  >
+                    Skip break
+                  </button>
+                ) : null}
+              </div>
+            ) : null}
           </div>
         ) : null}
-        <TodayActivity
-          currentTask={currentTask}
-          timeLeft={timeLeft}
-          sessionLabel={sessionLabel}
-          history={todayHistory}
-          weeklySummary={weeklySummary}
-          dailyGoal={dailyGoalCount}
-          dailyProgress={dailyProgress}
-          focusSessionsToday={todayFocusSessions}
-          onClearHistory={() => {
-            if (typeof window !== 'undefined') {
-              const confirmed = window.confirm('Clear today history? This cannot be undone.');
-              if (!confirmed) {
-                return;
-              }
-            }
-            setSessionHistory({});
-            if (typeof window !== 'undefined') {
-              window.localStorage.removeItem('pomobar-history');
-            }
-          }}
-        />
+        <div className="activity-drawer">
+          <div className={`activity-panel activity-panel--collapsed${isActivityExpanded ? '' : ' is-open'}`}>
+            <div className="activity-collapsed">
+              <div className="activity-collapsed-title">Progress</div>
+              <div className="activity-collapsed-summary">
+                Today: {todayFocusSessions}/{dailyGoalCount} focus · Last 7 days:{' '}
+                {weeklySummary.totalSessions} sessions
+              </div>
+              <button
+                className="activity-collapsed-button"
+                onClick={() => setIsActivityExpanded(true)}
+              >
+                Show details
+              </button>
+            </div>
+          </div>
+
+          <div className={`activity-panel activity-panel--expanded${isActivityExpanded ? ' is-open' : ''}`}>
+            <TodayActivity
+              currentTask={currentTask}
+              timeLeft={timeLeft}
+              sessionLabel={sessionLabel}
+              history={todayHistory}
+              weeklySummary={weeklySummary}
+              dailyGoal={dailyGoalCount}
+              dailyProgress={dailyProgress}
+              focusSessionsToday={todayFocusSessions}
+              onClearHistory={() => {
+                if (typeof window !== 'undefined') {
+                  const confirmed = window.confirm('Clear today history? This cannot be undone.');
+                  if (!confirmed) {
+                    return;
+                  }
+                }
+                setSessionHistory((previous) => {
+                  const next = { ...previous };
+                  delete next[todayKey];
+                  if (typeof window !== 'undefined') {
+                    window.localStorage.setItem('pomobar-history', JSON.stringify(next));
+                  }
+                  return next;
+                });
+              }}
+            />
+          </div>
+        </div>
         {isSettingsOpen ? (
           <div className="inline-panel settings-panel">
             <div className="settings-grid">
@@ -665,7 +763,7 @@ function App() {
               </div>
             </div>
             <div className="settings-debug">
-              <span className="field-label">Sound</span>
+              <span className="field-label">Feedback</span>
               <span className="settings-debug-text">
                 {`AudioContext: ${getFeedbackState()}`}
               </span>
@@ -677,22 +775,22 @@ function App() {
                 onClick={async () => {
                   setSoundError(null);
                   if (!hapticsEnabled) {
-                    setSoundError('Sound is off.');
+                    setSoundError('Feedback is off.');
                     return;
                   }
                   const result = await testFeedbackTone();
                   if (!result.ok) {
                     setSoundError(
                       result.reason === 'unavailable'
-                        ? 'Sound API unavailable in this browser.'
-                        : 'Sound is blocked by the browser.'
+                        ? 'Feedback API unavailable in this browser.'
+                        : 'Feedback is blocked by the browser.'
                     );
                     return;
                   }
                   setSoundError(null);
                 }}
               >
-                Test sound
+                Test feedback
               </button>
               <button
                 className="secondary-button"
@@ -715,10 +813,17 @@ function App() {
           hapticsEnabled={hapticsEnabled}
           isEditingTask={isEditingTask}
           isSettingsOpen={isSettingsOpen}
+          isActivityExpanded={isActivityExpanded}
           onToggleTaskEditor={() => {
             setIsSettingsOpen(false);
             setTaskDraft(currentTask);
             setIsEditingTask((previous) => !previous);
+            void fireFeedback('light');
+          }}
+          onToggleActivity={() => {
+            setIsSettingsOpen(false);
+            setIsEditingTask(false);
+            setIsActivityExpanded((previous) => !previous);
             void fireFeedback('light');
           }}
           onToggleHaptics={() => {

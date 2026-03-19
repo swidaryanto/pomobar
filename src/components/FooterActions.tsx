@@ -4,7 +4,9 @@ interface FooterActionsProps {
   hapticsEnabled: boolean;
   isEditingTask: boolean;
   isSettingsOpen: boolean;
+  isActivityExpanded: boolean;
   onToggleTaskEditor: () => void;
+  onToggleActivity: () => void;
   onToggleHaptics: () => void;
   onToggleSettings: () => void;
 }
@@ -13,13 +15,26 @@ const FooterActions: React.FC<FooterActionsProps> = ({
   hapticsEnabled,
   isEditingTask,
   isSettingsOpen,
+  isActivityExpanded,
   onToggleTaskEditor,
+  onToggleActivity,
   onToggleHaptics,
   onToggleSettings,
 }) => {
   return (
     <div className="footer-actions">
       <div className="footer-actions-panel">
+        <button
+          onClick={onToggleActivity}
+          className="footer-actions-button"
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M3 3v18h18"></path>
+            <path d="M7 14l4-4 4 3 5-6"></path>
+          </svg>
+          {isActivityExpanded ? 'Hide progress' : 'Show progress'}
+        </button>
+
         <button
           onClick={onToggleTaskEditor}
           className="footer-actions-button"
@@ -36,7 +51,7 @@ const FooterActions: React.FC<FooterActionsProps> = ({
             <circle cx="12" cy="12" r="10" strokeDasharray="3 3"></circle>
             <circle cx="12" cy="12" r="3"></circle>
           </svg>
-          {hapticsEnabled ? 'Sound on' : 'Sound off'}
+          {hapticsEnabled ? 'Feedback on' : 'Feedback off'}
         </button>
 
         <button
@@ -49,6 +64,9 @@ const FooterActions: React.FC<FooterActionsProps> = ({
           </svg>
           {isSettingsOpen ? 'Close settings' : 'Settings'}
         </button>
+      </div>
+      <div className="footer-shortcuts">
+        Shortcuts: Space start/pause · ↑/↓ ±5m · Cmd/Ctrl+, settings
       </div>
     </div>
   );
