@@ -196,6 +196,7 @@ function App() {
   const [isEditingTask, setIsEditingTask] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isActivityExpanded, setIsActivityExpanded] = useState(false);
+  const [isCompactView, setIsCompactView] = useState(false);
   const [taskDraft, setTaskDraft] = useState(preferences.currentTask);
   const [focusDraft, setFocusDraft] = useState(String(preferences.focusMinutes));
   const [breakDraft, setBreakDraft] = useState(String(preferences.breakMinutes));
@@ -584,7 +585,9 @@ function App() {
   const isElectron = Boolean(window.electronAPI);
 
   return (
-    <div className={`app-container${isElectron ? ' electron' : ''}`}>
+    <div
+      className={`app-container${isElectron ? ' electron' : ''}${isCompactView ? ' is-compact' : ''}`}
+    >
       <div className="card top-card">
         <Header />
         <div className="timer-layout">
@@ -655,53 +658,55 @@ function App() {
             ) : null}
           </div>
         ) : null}
-        <div className="activity-drawer">
-          <div className={`activity-panel activity-panel--collapsed${isActivityExpanded ? '' : ' is-open'}`}>
-            <div className="activity-collapsed">
-              <div className="activity-collapsed-title">Progress</div>
-              <div className="activity-collapsed-summary">
-                Today: {todayFocusSessions}/{dailyGoalCount} focus · Last 7 days:{' '}
-                {weeklySummary.totalSessions} sessions
+        {!isCompactView ? (
+          <div className="activity-drawer">
+            <div className={`activity-panel activity-panel--collapsed${isActivityExpanded ? '' : ' is-open'}`}>
+              <div className="activity-collapsed">
+                <div className="activity-collapsed-title">Progress</div>
+                <div className="activity-collapsed-summary">
+                  Today: {todayFocusSessions}/{dailyGoalCount} focus · Last 7 days:{' '}
+                  {weeklySummary.totalSessions} sessions
+                </div>
+                <button
+                  className="activity-collapsed-button"
+                  onClick={() => setIsActivityExpanded(true)}
+                >
+                  Show details
+                </button>
               </div>
-              <button
-                className="activity-collapsed-button"
-                onClick={() => setIsActivityExpanded(true)}
-              >
-                Show details
-              </button>
+            </div>
+
+            <div className={`activity-panel activity-panel--expanded${isActivityExpanded ? ' is-open' : ''}`}>
+              <TodayActivity
+                currentTask={currentTask}
+                timeLeft={timeLeft}
+                sessionLabel={sessionLabel}
+                history={todayHistory}
+                weeklySummary={weeklySummary}
+                dailyGoal={dailyGoalCount}
+                dailyProgress={dailyProgress}
+                focusSessionsToday={todayFocusSessions}
+                onClearHistory={() => {
+                  if (typeof window !== 'undefined') {
+                    const confirmed = window.confirm('Clear today history? This cannot be undone.');
+                    if (!confirmed) {
+                      return;
+                    }
+                  }
+                  setSessionHistory((previous) => {
+                    const next = { ...previous };
+                    delete next[todayKey];
+                    if (typeof window !== 'undefined') {
+                      window.localStorage.setItem('pomobar-history', JSON.stringify(next));
+                    }
+                    return next;
+                  });
+                }}
+              />
             </div>
           </div>
-
-          <div className={`activity-panel activity-panel--expanded${isActivityExpanded ? ' is-open' : ''}`}>
-            <TodayActivity
-              currentTask={currentTask}
-              timeLeft={timeLeft}
-              sessionLabel={sessionLabel}
-              history={todayHistory}
-              weeklySummary={weeklySummary}
-              dailyGoal={dailyGoalCount}
-              dailyProgress={dailyProgress}
-              focusSessionsToday={todayFocusSessions}
-              onClearHistory={() => {
-                if (typeof window !== 'undefined') {
-                  const confirmed = window.confirm('Clear today history? This cannot be undone.');
-                  if (!confirmed) {
-                    return;
-                  }
-                }
-                setSessionHistory((previous) => {
-                  const next = { ...previous };
-                  delete next[todayKey];
-                  if (typeof window !== 'undefined') {
-                    window.localStorage.setItem('pomobar-history', JSON.stringify(next));
-                  }
-                  return next;
-                });
-              }}
-            />
-          </div>
-        </div>
-        {isSettingsOpen ? (
+        ) : null}
+        {isSettingsOpen && !isCompactView ? (
           <div className="inline-panel settings-panel">
             <div className="settings-grid">
               <label className="settings-field" htmlFor="focus-duration-input">
@@ -814,13 +819,20 @@ function App() {
           isEditingTask={isEditingTask}
           isSettingsOpen={isSettingsOpen}
           isActivityExpanded={isActivityExpanded}
+          isCompactView={isCompactView}
           onToggleTaskEditor={() => {
+            if (isCompactView) {
+              setIsCompactView(false);
+            }
             setIsSettingsOpen(false);
             setTaskDraft(currentTask);
             setIsEditingTask((previous) => !previous);
             void fireFeedback('light');
           }}
           onToggleActivity={() => {
+            if (isCompactView) {
+              setIsCompactView(false);
+            }
             setIsSettingsOpen(false);
             setIsEditingTask(false);
             setIsActivityExpanded((previous) => !previous);
@@ -840,11 +852,21 @@ function App() {
             });
           }}
           onToggleSettings={() => {
+            if (isCompactView) {
+              setIsCompactView(false);
+            }
             setIsEditingTask(false);
             setFocusDraft(String(focusMinutes));
             setBreakDraft(String(breakMinutes));
             setThemeDraft(preferences.theme);
             setIsSettingsOpen((previous) => !previous);
+            void fireFeedback('light');
+          }}
+          onToggleCompact={() => {
+            setIsEditingTask(false);
+            setIsSettingsOpen(false);
+            setIsActivityExpanded(false);
+            setIsCompactView((previous) => !previous);
             void fireFeedback('light');
           }}
         />

@@ -160,6 +160,18 @@ body[data-theme='analog'] .top-card {
   position: relative;
 }
 
+.app-container.is-compact .activity-card {
+  padding: 12px;
+}
+
+.app-container.is-compact .footer-actions-panel {
+  margin: 6px;
+}
+
+.app-container.is-compact .footer-shortcuts {
+  display: none;
+}
+
 .inline-panel {
   -webkit-app-region: no-drag;
   display: flex;
@@ -323,13 +335,33 @@ body[data-theme='analog'] .theme-option.is-active {
   opacity: 1;
 }
 
-.controls-grid {
+.controls {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.controls-row {
   display: grid;
   grid-template-columns: repeat(3, 34px);
   gap: 6px;
   justify-content: end;
   align-items: center;
-  margin-top: 4px;
+}
+
+.controls-meta {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.controls-hint {
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
 }
 
 .control-button {
@@ -352,11 +384,10 @@ body[data-theme='analog'] .theme-option.is-active {
 }
 
 .control-reset {
-  grid-column: 1 / -1;
   background-color: transparent;
   color: var(--text-secondary);
   font-size: var(--text-sm);
-  padding: 6px 0;
+  padding: 4px 8px;
   border-radius: 10px;
   border: 1px solid var(--divider);
   background: rgba(255, 255, 255, 0.04);
@@ -839,7 +870,7 @@ body[data-theme='analog'] .timer-ticks {
   opacity: 0.7;
 }
 
-body[data-theme='analog'] .controls-grid {
+body[data-theme='analog'] .controls-row {
   grid-template-columns: repeat(3, 28px);
   justify-content: end;
   align-items: center;
@@ -860,7 +891,7 @@ body[data-theme='analog'] .control-button {
 
 body[data-theme='analog'] .control-reset {
   font-size: var(--text-sm);
-  padding: 5px 0;
+  padding: 4px 8px;
   border-radius: 8px;
   border-color: rgba(76, 64, 52, 0.12);
   background: rgba(255, 255, 255, 0.7);
