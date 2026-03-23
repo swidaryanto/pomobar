@@ -146,9 +146,9 @@ body[data-theme='analog'] .card {
 body[data-theme='analog'] .top-card {
   position: relative;
   background-image:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.35), rgba(255, 255, 255, 0)),
-    radial-gradient(circle, rgba(0, 0, 0, 0.18) 0.9px, transparent 1px);
-  background-size: 100% 100%, 8px 8px;
+    linear-gradient(180deg, rgba(255, 255, 255, 0.24), rgba(255, 255, 255, 0)),
+    radial-gradient(circle, rgba(0, 0, 0, 0.1) 0.7px, transparent 1px);
+  background-size: 100% 100%, 14px 14px;
   background-position: 0 0, 0 0;
 }
 
@@ -158,6 +158,18 @@ body[data-theme='analog'] .top-card {
   flex-direction: column;
   padding: 20px;
   position: relative;
+}
+
+.app-container.is-compact .activity-card {
+  padding: 12px;
+}
+
+.app-container.is-compact .footer-actions-panel {
+  margin: 6px;
+}
+
+.app-container.is-compact .footer-shortcuts {
+  display: none;
 }
 
 .inline-panel {
@@ -223,7 +235,7 @@ body[data-theme='analog'] .inline-panel {
 }
 
 body[data-theme='analog'] .theme-option.is-active {
-  background: var(--bg-secondary);
+  background: rgba(255, 255, 255, 0.7);
 }
 
 .field-label {
@@ -323,13 +335,33 @@ body[data-theme='analog'] .theme-option.is-active {
   opacity: 1;
 }
 
-.controls-grid {
+.controls {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.controls-row {
   display: grid;
   grid-template-columns: repeat(3, 34px);
   gap: 6px;
   justify-content: end;
   align-items: center;
-  margin-top: 4px;
+}
+
+.controls-meta {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.controls-hint {
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
 }
 
 .control-button {
@@ -352,11 +384,10 @@ body[data-theme='analog'] .theme-option.is-active {
 }
 
 .control-reset {
-  grid-column: 1 / -1;
   background-color: transparent;
   color: var(--text-secondary);
   font-size: var(--text-sm);
-  padding: 6px 0;
+  padding: 4px 8px;
   border-radius: 10px;
   border: 1px solid var(--divider);
   background: rgba(255, 255, 255, 0.04);
@@ -734,6 +765,59 @@ body[data-theme='analog'] .completion-toast-button.primary {
   border-radius: var(--radius-sm);
   white-space: nowrap;
 }
+
+body[data-theme='analog'] .activity-pill {
+  background-color: rgba(255, 255, 255, 0.6);
+  color: var(--text-secondary);
+  border: 1px solid rgba(76, 64, 52, 0.1);
+}
+
+body[data-theme='analog'] .activity-dot {
+  border-color: rgba(76, 64, 52, 0.35);
+  opacity: 0.7;
+}
+
+body[data-theme='analog'] .activity-divider {
+  border-bottom-color: rgba(76, 64, 52, 0.16);
+  opacity: 0.6;
+}
+
+body[data-theme='analog'] .activity-history-row {
+  color: var(--text-secondary);
+}
+
+body[data-theme='analog'] .activity-history-type {
+  color: var(--text-primary);
+}
+
+body[data-theme='analog'] .activity-history-meta {
+  opacity: 0.75;
+}
+
+body[data-theme='analog'] .activity-history-empty {
+  color: var(--text-secondary);
+}
+
+body[data-theme='analog'] .activity-weekly-text {
+  color: var(--text-secondary);
+}
+
+body[data-theme='analog'] .activity-clear {
+  background: rgba(255, 255, 255, 0.7);
+  border-color: rgba(76, 64, 52, 0.12);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
+}
+
+body[data-theme='analog'] .activity-collapsed-button {
+  background: rgba(255, 255, 255, 0.7);
+  border-color: rgba(76, 64, 52, 0.12);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
+}
+
+body[data-theme='analog'] .activity-goal-track {
+  stroke: rgba(76, 64, 52, 0.18);
+  opacity: 0.7;
+}
 .control-button--accent {
   color: var(--accent-yellow);
 }
@@ -786,7 +870,7 @@ body[data-theme='analog'] .timer-ticks {
   opacity: 0.7;
 }
 
-body[data-theme='analog'] .controls-grid {
+body[data-theme='analog'] .controls-row {
   grid-template-columns: repeat(3, 28px);
   justify-content: end;
   align-items: center;
@@ -799,24 +883,24 @@ body[data-theme='analog'] .control-button {
   padding: 0;
   border-radius: 8px;
   font-size: 13px;
-  background: var(--bg-secondary);
-  border: 1px solid var(--divider);
+  background: rgba(255, 255, 255, 0.65);
+  border: 1px solid rgba(76, 64, 52, 0.12);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8),
     0 1px 2px rgba(0, 0, 0, 0.08);
 }
 
 body[data-theme='analog'] .control-reset {
   font-size: var(--text-sm);
-  padding: 5px 0;
+  padding: 4px 8px;
   border-radius: 8px;
-  border-color: var(--divider);
-  background: rgba(255, 255, 255, 0.6);
+  border-color: rgba(76, 64, 52, 0.12);
+  background: rgba(255, 255, 255, 0.7);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
 }
 
 body[data-theme='analog'] .footer-actions-panel {
-  background: var(--bg-tertiary);
-  border-color: var(--divider);
+  background: var(--bg-secondary);
+  border-color: rgba(76, 64, 52, 0.12);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7),
     0 1px 2px rgba(0, 0, 0, 0.08);
 }
@@ -842,8 +926,8 @@ body[data-theme='analog'] .footer-actions-button.is-muted {
 }
 
 body[data-theme='analog'] .inline-input {
-  background: var(--bg-secondary);
-  border-color: var(--divider);
+  background: rgba(255, 255, 255, 0.7);
+  border-color: rgba(76, 64, 52, 0.12);
   box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.06);
 }
 
@@ -901,7 +985,7 @@ body[data-theme='analog'] .primary-button {
 }
 
 body[data-theme='analog'] .secondary-button {
-  background: rgba(255, 255, 255, 0.75);
-  border-color: var(--divider);
+  background: rgba(255, 255, 255, 0.8);
+  border-color: rgba(76, 64, 52, 0.12);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
 }
