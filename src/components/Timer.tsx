@@ -12,6 +12,7 @@ interface TimerProps {
     onTaskEditStart: () => void;
     onTaskSave: () => void;
     onTaskCancel: () => void;
+    totalDurationSeconds: number;
 }
 
 const Timer: React.FC<TimerProps> = ({
@@ -26,9 +27,15 @@ const Timer: React.FC<TimerProps> = ({
     onTaskEditStart,
     onTaskSave,
     onTaskCancel,
+    totalDurationSeconds,
 }) => {
     const m = Math.floor(timeLeft / 60).toString().padStart(2, '0');
     const s = (timeLeft % 60).toString().padStart(2, '0');
+    const tickCount = 7;
+    const safeTotalDuration = Math.max(1, totalDurationSeconds);
+    const elapsedSeconds = Math.max(0, safeTotalDuration - timeLeft);
+    const progress = Math.min(1, elapsedSeconds / safeTotalDuration);
+    const activeTicks = Math.max(1, Math.ceil(progress * tickCount));
 
     return (
         <div className="timer-block">
@@ -73,10 +80,10 @@ const Timer: React.FC<TimerProps> = ({
                 Next: {nextSessionLabel} {nextSessionMinutes}m
             </div>
             <div className="timer-ticks">
-                {[1, 2, 3, 4, 5, 6, 7].map((i) => (
+                {Array.from({ length: tickCount }, (_, index) => (
                     <div
-                        key={i}
-                        className={`timer-tick${i === 1 ? ' is-active' : ''}`}
+                        key={index}
+                        className={`timer-tick${index < activeTicks ? ' is-active' : ''}`}
                     />
                 ))}
             </div>

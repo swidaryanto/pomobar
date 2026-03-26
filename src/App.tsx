@@ -342,6 +342,10 @@ function App() {
   );
   const nextSessionLabel = sessionType === 'focus' ? 'Break' : 'Focus';
   const nextSessionMinutes = sessionType === 'focus' ? breakMinutes : focusMinutes;
+  const currentSessionDurationSeconds = useMemo(
+    () => (sessionType === 'focus' ? focusMinutes * 60 : breakMinutes * 60),
+    [sessionType, focusMinutes, breakMinutes]
+  );
 
   useEffect(() => {
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(preferences));
@@ -607,6 +611,7 @@ function App() {
             }}
             onTaskSave={handleTaskSave}
             onTaskCancel={handleTaskCancel}
+            totalDurationSeconds={currentSessionDurationSeconds}
           />
           <Controls
             setTimeLeft={setTimeLeft}
