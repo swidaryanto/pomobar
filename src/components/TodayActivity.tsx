@@ -10,9 +10,6 @@ interface TodayActivityProps {
     durationMinutes: number;
     completedAt: number;
   }>;
-  dailyGoal: number;
-  dailyProgress: number;
-  focusSessionsToday: number;
   weeklySummary: {
     totalSessions: number;
     totalMinutes: number;
@@ -35,9 +32,6 @@ const TodayActivity: React.FC<TodayActivityProps> = ({
   timeLeft,
   sessionLabel,
   history,
-  dailyGoal,
-  dailyProgress,
-  focusSessionsToday,
   weeklySummary,
   onClearHistory,
 }) => {
@@ -49,11 +43,6 @@ const TodayActivity: React.FC<TodayActivityProps> = ({
     weeklySummary.totalSessions === 0
       ? 'No sessions in the past 7 days.'
       : `Last 7 days: ${weeklySummary.totalSessions} sessions · ${weeklySummary.totalMinutes}m (Focus ${weeklySummary.focusSessions} / Break ${weeklySummary.breakSessions})`;
-  const ringSize = 64;
-  const ringStroke = 6;
-  const ringRadius = (ringSize - ringStroke) / 2;
-  const ringCircumference = 2 * Math.PI * ringRadius;
-  const ringOffset = ringCircumference * (1 - dailyProgress);
 
   return (
     <div className="activity">
@@ -86,38 +75,6 @@ const TodayActivity: React.FC<TodayActivityProps> = ({
       </div>
 
       <div className="activity-divider" />
-
-      <div className="activity-goal">
-        <div className="activity-goal-ring" role="img" aria-label="Daily goal progress">
-          <svg width={ringSize} height={ringSize} viewBox={`0 0 ${ringSize} ${ringSize}`}>
-            <circle
-              className="activity-goal-track"
-              cx={ringSize / 2}
-              cy={ringSize / 2}
-              r={ringRadius}
-              strokeWidth={ringStroke}
-            />
-            <circle
-              className="activity-goal-progress"
-              cx={ringSize / 2}
-              cy={ringSize / 2}
-              r={ringRadius}
-              strokeWidth={ringStroke}
-              strokeDasharray={ringCircumference}
-              strokeDashoffset={ringOffset}
-            />
-          </svg>
-          <div className="activity-goal-value">
-            {focusSessionsToday}/{dailyGoal}
-          </div>
-        </div>
-        <div className="activity-goal-text">
-          <div className="activity-goal-title">Daily goal</div>
-          <div className="activity-goal-subtitle">
-            {dailyProgress >= 1 ? 'Goal complete' : `${Math.round(dailyProgress * 100)}% done`}
-          </div>
-        </div>
-      </div>
 
       <div className="activity-history">
         {history.length === 0 ? (
