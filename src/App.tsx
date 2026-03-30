@@ -196,7 +196,7 @@ function App() {
   const [isEditingTask, setIsEditingTask] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isActivityExpanded, setIsActivityExpanded] = useState(false);
-  const [isCompactView, setIsCompactView] = useState(false);
+  const [isCompactView, setIsCompactView] = useState(true);
   const [taskDraft, setTaskDraft] = useState(preferences.currentTask);
   const [focusDraft, setFocusDraft] = useState(String(preferences.focusMinutes));
   const [breakDraft, setBreakDraft] = useState(String(preferences.breakMinutes));
@@ -340,8 +340,6 @@ function App() {
     () => (sessionType === 'focus' ? 'Focus' : 'Break'),
     [sessionType]
   );
-  const nextSessionLabel = sessionType === 'focus' ? 'Break' : 'Focus';
-  const nextSessionMinutes = sessionType === 'focus' ? breakMinutes : focusMinutes;
   const currentSessionDurationSeconds = useMemo(
     () => (sessionType === 'focus' ? focusMinutes * 60 : breakMinutes * 60),
     [sessionType, focusMinutes, breakMinutes]
@@ -599,8 +597,6 @@ function App() {
             timeLeft={timeLeft}
             currentTask={currentTask}
             sessionLabel={sessionLabel}
-            nextSessionLabel={nextSessionLabel}
-            nextSessionMinutes={nextSessionMinutes}
             isEditingTask={isEditingTask}
             taskDraft={taskDraft}
             onTaskChange={setTaskDraft}

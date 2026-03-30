@@ -4,8 +4,6 @@ interface TimerProps {
     timeLeft: number;
     currentTask: string;
     sessionLabel: string;
-    nextSessionLabel: string;
-    nextSessionMinutes: number;
     isEditingTask: boolean;
     taskDraft: string;
     onTaskChange: (value: string) => void;
@@ -19,8 +17,6 @@ const Timer: React.FC<TimerProps> = ({
     timeLeft,
     currentTask,
     sessionLabel,
-    nextSessionLabel,
-    nextSessionMinutes,
     isEditingTask,
     taskDraft,
     onTaskChange,
@@ -75,9 +71,6 @@ const Timer: React.FC<TimerProps> = ({
             ) : null}
             <div className="timer-clock">
                 {m}:{s}
-            </div>
-            <div className="timer-next">
-                Next: {nextSessionLabel} {nextSessionMinutes}m
             </div>
             <div className="timer-ticks">
                 {Array.from({ length: tickCount }, (_, index) => (

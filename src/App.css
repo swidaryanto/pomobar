@@ -168,10 +168,6 @@ body[data-theme='analog'] .top-card {
   margin: 6px;
 }
 
-.app-container.is-compact .footer-shortcuts {
-  display: none;
-}
-
 .inline-panel {
   -webkit-app-region: no-drag;
   display: flex;
@@ -310,12 +306,6 @@ body[data-theme='analog'] .theme-option.is-active {
   margin-top: 6px;
 }
 
-.timer-next {
-  margin-top: 4px;
-  font-size: var(--text-sm);
-  color: var(--text-secondary);
-}
-
 .timer-ticks {
   display: flex;
   gap: 8px;
@@ -430,12 +420,6 @@ body[data-theme='analog'] .theme-option.is-active {
 
 .footer-actions-button.is-muted {
   opacity: 0.55;
-}
-
-.footer-shortcuts {
-  font-size: var(--text-xs);
-  color: var(--text-secondary);
-  text-align: center;
 }
 
 .footer-actions-icon {
