@@ -77,11 +77,8 @@ const FooterActions: React.FC<FooterActionsProps> = ({
             <rect x="3" y="4" width="18" height="6" rx="1"></rect>
             <rect x="3" y="14" width="10" height="6" rx="1"></rect>
           </svg>
-          {isCompactView ? 'Expand view' : 'Compact view'}
+          {isCompactView ? 'Detailed view' : 'Simple view'}
         </button>
-      </div>
-      <div className="footer-shortcuts">
-        Shortcuts: Space start/pause · ↑/↓ ±5m · Cmd/Ctrl+, settings
       </div>
     </div>
   );
