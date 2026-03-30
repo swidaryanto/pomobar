@@ -2,12 +2,10 @@ import React from 'react';
 
 interface TimerProps {
     timeLeft: number;
-    currentTask: string;
     sessionLabel: string;
     isEditingTask: boolean;
     taskDraft: string;
     onTaskChange: (value: string) => void;
-    onTaskEditStart: () => void;
     onTaskSave: () => void;
     onTaskCancel: () => void;
     totalDurationSeconds: number;
@@ -15,12 +13,10 @@ interface TimerProps {
 
 const Timer: React.FC<TimerProps> = ({
     timeLeft,
-    currentTask,
     sessionLabel,
     isEditingTask,
     taskDraft,
     onTaskChange,
-    onTaskEditStart,
     onTaskSave,
     onTaskCancel,
     totalDurationSeconds,
@@ -37,7 +33,9 @@ const Timer: React.FC<TimerProps> = ({
         <div className="timer-block">
             <div className="timer-header">
                 <span className="timer-session">{sessionLabel}</span>
-                {isEditingTask ? (
+            </div>
+            {isEditingTask ? (
+                <div className="timer-task-actions">
                     <input
                         className="timer-task-input"
                         value={taskDraft}
@@ -53,14 +51,6 @@ const Timer: React.FC<TimerProps> = ({
                         maxLength={60}
                         autoFocus
                     />
-                ) : (
-                    <button className="timer-task" onClick={onTaskEditStart}>
-                        {currentTask}
-                    </button>
-                )}
-            </div>
-            {isEditingTask ? (
-                <div className="timer-task-actions">
                     <button className="secondary-button" onClick={onTaskCancel}>
                         Cancel
                     </button>

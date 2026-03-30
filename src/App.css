@@ -127,15 +127,9 @@ button:active {
 
 .header-date-row {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-end;
   align-items: center;
   opacity: 0.6;
-}
-
-.header-date-left {
-  display: flex;
-  gap: 8px;
-  align-items: center;
 }
 
 body[data-theme='analog'] .card {
@@ -540,64 +534,6 @@ body[data-theme='analog'] .theme-option.is-active {
   opacity: 0.5;
 }
 
-.activity-goal {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 6px;
-}
-
-.activity-goal-ring {
-  position: relative;
-  width: 64px;
-  height: 64px;
-}
-
-.activity-goal-track {
-  fill: none;
-  stroke: var(--divider);
-  opacity: 0.6;
-}
-
-.activity-goal-progress {
-  fill: none;
-  stroke: var(--accent-yellow);
-  stroke-linecap: round;
-  transform: rotate(-90deg);
-  transform-origin: 50% 50%;
-  transition: stroke-dashoffset 0.35s ease;
-}
-
-.activity-goal-value {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: var(--text-sm);
-  font-weight: 600;
-  color: var(--text-primary);
-}
-
-.activity-goal-text {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.activity-goal-title {
-  font-family: var(--font-heading);
-  font-size: var(--text-xs);
-  color: var(--text-secondary);
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-}
-
-.activity-goal-subtitle {
-  font-size: var(--text-md);
-  color: var(--text-primary);
-}
-
 .activity-footer {
   display: flex;
   justify-content: space-between;
@@ -798,10 +734,6 @@ body[data-theme='analog'] .activity-collapsed-button {
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
 }
 
-body[data-theme='analog'] .activity-goal-track {
-  stroke: rgba(76, 64, 52, 0.18);
-  opacity: 0.7;
-}
 .control-button--accent {
   color: var(--accent-yellow);
 }

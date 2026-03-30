@@ -2,7 +2,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Header from './components/Header';
 import Timer from './components/Timer';
 import Controls from './components/Controls';
-import TodayActivity from './components/TodayActivity';
 import FooterActions from './components/FooterActions';
 import { triggerHaptic } from './lib/haptics';
 import { getFeedbackState, playFeedbackTone, testFeedbackTone } from './lib/feedback';
@@ -13,7 +12,6 @@ const DEFAULT_FOCUS_MIN = 25;
 const DEFAULT_BREAK_MIN = 5;
 const DEFAULT_TASK = 'Focus Task';
 const DEFAULT_THEME = 'analog';
-const DEFAULT_DAILY_GOAL = 6;
 const STORAGE_KEY = 'pomobar-preferences';
 const SESSION_KEY = 'pomobar-session';
 type ThemeName = 'dark' | 'analog';
@@ -32,7 +30,6 @@ interface StoredPreferences {
   focusMinutes: number;
   hapticsEnabled: boolean;
   theme: ThemeName;
-  dailyGoal: number;
 }
 
 interface StoredSession {
@@ -40,22 +37,6 @@ interface StoredSession {
   pomodoroState: 'idle' | 'running' | 'paused';
   timeLeft: number;
   lastUpdated: number;
-}
-
-interface SessionHistoryItem {
-  id: string;
-  type: 'focus' | 'break';
-  durationMinutes: number;
-  completedAt: number;
-}
-
-type SessionHistoryMap = Record<string, SessionHistoryItem[]>;
-
-interface WeeklySummary {
-  totalSessions: number;
-  totalMinutes: number;
-  focusSessions: number;
-  breakSessions: number;
 }
 
 const readStoredPreferences = (): StoredPreferences => {
@@ -66,7 +47,6 @@ const readStoredPreferences = (): StoredPreferences => {
       focusMinutes: DEFAULT_FOCUS_MIN,
       hapticsEnabled: true,
       theme: DEFAULT_THEME,
-      dailyGoal: DEFAULT_DAILY_GOAL,
     };
   }
 
@@ -98,10 +78,6 @@ const readStoredPreferences = (): StoredPreferences => {
       hapticsEnabled:
         typeof parsed.hapticsEnabled === 'boolean' ? parsed.hapticsEnabled : true,
       theme: resolvedTheme,
-      dailyGoal:
-        typeof parsed.dailyGoal === 'number' && parsed.dailyGoal > 0
-          ? Math.round(parsed.dailyGoal)
-          : DEFAULT_DAILY_GOAL,
     };
   } catch {
     return {
@@ -110,7 +86,6 @@ const readStoredPreferences = (): StoredPreferences => {
       focusMinutes: DEFAULT_FOCUS_MIN,
       hapticsEnabled: true,
       theme: DEFAULT_THEME,
-      dailyGoal: DEFAULT_DAILY_GOAL,
     };
   }
 };
@@ -195,31 +170,17 @@ function App() {
   const [preferences, setPreferences] = useState(initialPreferences);
   const [isEditingTask, setIsEditingTask] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const [isActivityExpanded, setIsActivityExpanded] = useState(false);
-  const [isCompactView, setIsCompactView] = useState(true);
   const [taskDraft, setTaskDraft] = useState(preferences.currentTask);
   const [focusDraft, setFocusDraft] = useState(String(preferences.focusMinutes));
   const [breakDraft, setBreakDraft] = useState(String(preferences.breakMinutes));
   const [themeDraft, setThemeDraft] = useState<ThemeName>(preferences.theme);
-  const [dailyGoalDraft, setDailyGoalDraft] = useState(String(preferences.dailyGoal));
   const [soundError, setSoundError] = useState<string | null>(null);
   const [completionNote, setCompletionNote] = useState<string | null>(null);
   const [completionAction, setCompletionAction] = useState<{
     completedSession: 'focus' | 'break';
     nextSession: 'focus' | 'break';
   } | null>(null);
-  const [sessionHistory, setSessionHistory] = useState<SessionHistoryMap>(() => {
-    if (typeof window === 'undefined') {
-      return {};
-    }
-    try {
-      const raw = window.localStorage.getItem('pomobar-history');
-      return raw ? (JSON.parse(raw) as SessionHistoryMap) : {};
-    } catch {
-      return {};
-    }
-  });
-  const { breakMinutes, currentTask, focusMinutes, hapticsEnabled, dailyGoal } = preferences;
+  const { breakMinutes, currentTask, focusMinutes, hapticsEnabled } = preferences;
   const lastSessionPersistAtRef = useRef(0);
   const pendingSessionPersistRef = useRef<number | null>(null);
   const latestSessionStateRef = useRef<{
@@ -273,26 +234,6 @@ function App() {
       const nextLabel = nextSession === 'focus' ? 'Focus' : 'Break';
       setCompletionNote(`${completedLabel} complete · Next: ${nextLabel}`);
       setCompletionAction({ completedSession, nextSession });
-
-      const now = Date.now();
-      const dateKey = new Date(now).toLocaleDateString('sv-SE');
-      const durationMinutes = completedSession === 'focus' ? focusMinutes : breakMinutes;
-      const item: SessionHistoryItem = {
-        id: `${now}-${completedSession}`,
-        type: completedSession,
-        durationMinutes,
-        completedAt: now,
-      };
-      setSessionHistory((previous) => {
-        const next = { ...previous };
-        const day = next[dateKey] ? [...next[dateKey]] : [];
-        day.unshift(item);
-        next[dateKey] = day.slice(0, 20);
-        if (typeof window !== 'undefined') {
-          window.localStorage.setItem('pomobar-history', JSON.stringify(next));
-        }
-        return next;
-      });
     },
     onStateChange: (state) => {
       if (typeof window === 'undefined') {
@@ -491,8 +432,7 @@ function App() {
 
   useEffect(() => {
     setThemeDraft(preferences.theme);
-    setDailyGoalDraft(String(preferences.dailyGoal));
-  }, [preferences.dailyGoal, preferences.theme]);
+  }, [preferences.theme]);
 
   useEffect(() => {
     const timeString = `${currentTask} | ${formatTime(timeLeft)}`;
@@ -500,41 +440,6 @@ function App() {
       window.electronAPI.updateTimer(timeString);
     }
   }, [timeLeft, currentTask]);
-
-  const todayKey = new Date().toLocaleDateString('sv-SE');
-  const todayHistory = sessionHistory[todayKey] ?? [];
-  const todayFocusSessions = todayHistory.filter((item) => item.type === 'focus').length;
-  const dailyGoalCount = Math.max(1, dailyGoal);
-  const dailyProgress = Math.min(1, todayFocusSessions / dailyGoalCount);
-  const weeklySummary = useMemo<WeeklySummary>(() => {
-    const now = new Date();
-    const keys: string[] = [];
-    for (let i = 0; i < 7; i += 1) {
-      const day = new Date(now);
-      day.setDate(now.getDate() - i);
-      keys.push(day.toLocaleDateString('sv-SE'));
-    }
-
-    let totalSessions = 0;
-    let totalMinutes = 0;
-    let focusSessions = 0;
-    let breakSessions = 0;
-
-    keys.forEach((key) => {
-      const items = sessionHistory[key] ?? [];
-      items.forEach((item) => {
-        totalSessions += 1;
-        totalMinutes += item.durationMinutes;
-        if (item.type === 'focus') {
-          focusSessions += 1;
-        } else {
-          breakSessions += 1;
-        }
-      });
-    });
-
-    return { totalSessions, totalMinutes, focusSessions, breakSessions };
-  }, [sessionHistory]);
 
   const handleTaskSave = () => {
     const nextTask = taskDraft.trim();
@@ -560,13 +465,11 @@ function App() {
   const handleSettingsSave = () => {
     const resolvedFocus = clampMinutesInput(focusDraft);
     const resolvedBreak = clampMinutesInput(breakDraft);
-    const resolvedGoal = clampMinutesInput(dailyGoalDraft);
 
-    if (!resolvedFocus || !resolvedBreak || !resolvedGoal) {
+    if (!resolvedFocus || !resolvedBreak) {
       setFocusDraft(String(focusMinutes));
       setBreakDraft(String(breakMinutes));
       setThemeDraft(preferences.theme);
-      setDailyGoalDraft(String(preferences.dailyGoal));
       setIsSettingsOpen(false);
       return;
     }
@@ -576,7 +479,6 @@ function App() {
       breakMinutes: resolvedBreak,
       focusMinutes: resolvedFocus,
       theme: themeDraft,
-      dailyGoal: resolvedGoal,
     }));
     updateDurations(resolvedFocus, resolvedBreak);
     resetTimer('focus');
@@ -587,24 +489,16 @@ function App() {
   const isElectron = Boolean(window.electronAPI);
 
   return (
-    <div
-      className={`app-container${isElectron ? ' electron' : ''}${isCompactView ? ' is-compact' : ''}`}
-    >
+    <div className={`app-container${isElectron ? ' electron' : ''}`}>
       <div className="card top-card">
         <Header />
         <div className="timer-layout">
           <Timer
             timeLeft={timeLeft}
-            currentTask={currentTask}
             sessionLabel={sessionLabel}
             isEditingTask={isEditingTask}
             taskDraft={taskDraft}
             onTaskChange={setTaskDraft}
-            onTaskEditStart={() => {
-              setIsSettingsOpen(false);
-              setIsEditingTask(true);
-              void fireFeedback('light');
-            }}
             onTaskSave={handleTaskSave}
             onTaskCancel={handleTaskCancel}
             totalDurationSeconds={currentSessionDurationSeconds}
@@ -659,55 +553,7 @@ function App() {
             ) : null}
           </div>
         ) : null}
-        {!isCompactView ? (
-          <div className="activity-drawer">
-            <div className={`activity-panel activity-panel--collapsed${isActivityExpanded ? '' : ' is-open'}`}>
-              <div className="activity-collapsed">
-                <div className="activity-collapsed-title">Progress</div>
-                <div className="activity-collapsed-summary">
-                  Today: {todayFocusSessions}/{dailyGoalCount} focus · Last 7 days:{' '}
-                  {weeklySummary.totalSessions} sessions
-                </div>
-                <button
-                  className="activity-collapsed-button"
-                  onClick={() => setIsActivityExpanded(true)}
-                >
-                  Show details
-                </button>
-              </div>
-            </div>
-
-            <div className={`activity-panel activity-panel--expanded${isActivityExpanded ? ' is-open' : ''}`}>
-              <TodayActivity
-                currentTask={currentTask}
-                timeLeft={timeLeft}
-                sessionLabel={sessionLabel}
-                history={todayHistory}
-                weeklySummary={weeklySummary}
-                dailyGoal={dailyGoalCount}
-                dailyProgress={dailyProgress}
-                focusSessionsToday={todayFocusSessions}
-                onClearHistory={() => {
-                  if (typeof window !== 'undefined') {
-                    const confirmed = window.confirm('Clear today history? This cannot be undone.');
-                    if (!confirmed) {
-                      return;
-                    }
-                  }
-                  setSessionHistory((previous) => {
-                    const next = { ...previous };
-                    delete next[todayKey];
-                    if (typeof window !== 'undefined') {
-                      window.localStorage.setItem('pomobar-history', JSON.stringify(next));
-                    }
-                    return next;
-                  });
-                }}
-              />
-            </div>
-          </div>
-        ) : null}
-        {isSettingsOpen && !isCompactView ? (
+        {isSettingsOpen ? (
           <div className="inline-panel settings-panel">
             <div className="settings-grid">
               <label className="settings-field" htmlFor="focus-duration-input">
@@ -732,20 +578,6 @@ function App() {
                   inputMode="numeric"
                   value={breakDraft}
                   onChange={(event) => setBreakDraft(event.target.value)}
-                />
-              </label>
-            </div>
-            <div className="settings-grid">
-              <label className="settings-field" htmlFor="daily-goal-input">
-                <span className="field-label">Daily goal</span>
-                <input
-                  id="daily-goal-input"
-                  className="inline-input"
-                  type="number"
-                  min="1"
-                  inputMode="numeric"
-                  value={dailyGoalDraft}
-                  onChange={(event) => setDailyGoalDraft(event.target.value)}
                 />
               </label>
             </div>
@@ -819,24 +651,10 @@ function App() {
           hapticsEnabled={hapticsEnabled}
           isEditingTask={isEditingTask}
           isSettingsOpen={isSettingsOpen}
-          isActivityExpanded={isActivityExpanded}
-          isCompactView={isCompactView}
           onToggleTaskEditor={() => {
-            if (isCompactView) {
-              setIsCompactView(false);
-            }
             setIsSettingsOpen(false);
             setTaskDraft(currentTask);
             setIsEditingTask((previous) => !previous);
-            void fireFeedback('light');
-          }}
-          onToggleActivity={() => {
-            if (isCompactView) {
-              setIsCompactView(false);
-            }
-            setIsSettingsOpen(false);
-            setIsEditingTask(false);
-            setIsActivityExpanded((previous) => !previous);
             void fireFeedback('light');
           }}
           onToggleHaptics={() => {
@@ -853,21 +671,11 @@ function App() {
             });
           }}
           onToggleSettings={() => {
-            if (isCompactView) {
-              setIsCompactView(false);
-            }
             setIsEditingTask(false);
             setFocusDraft(String(focusMinutes));
             setBreakDraft(String(breakMinutes));
             setThemeDraft(preferences.theme);
             setIsSettingsOpen((previous) => !previous);
-            void fireFeedback('light');
-          }}
-          onToggleCompact={() => {
-            setIsEditingTask(false);
-            setIsSettingsOpen(false);
-            setIsActivityExpanded(false);
-            setIsCompactView((previous) => !previous);
             void fireFeedback('light');
           }}
         />
