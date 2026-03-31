@@ -8,21 +8,7 @@ const Header: React.FC = () => {
 
     return (
         <div className="drag-region header">
-            {/* Top bar with traffic lights and More */}
-            <div className="header-top">
-                <div className="header-lights">
-                    <div className="header-light header-light--red" />
-                    <div className="header-light header-light--yellow" />
-                    <div className="header-light header-light--green" />
-                </div>
-                <div className="header-more">
-                    <div className="header-more-dot" />
-                    <div className="header-more-dot" />
-                    <div className="header-more-dot" />
-                </div>
-            </div>
-
-            {/* Date and icon */}
+            {/* Date */}
             <div className="header-date-row">
                 <div className="text-small text-mono">
                     {todayLabel}

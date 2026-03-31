@@ -24,7 +24,6 @@ const FooterActions: React.FC<FooterActionsProps> = ({
           onClick={onToggleTaskEditor}
           className="footer-actions-button"
         >
-          <span className="footer-actions-icon">+</span>
           {isEditingTask ? 'Close task' : 'Edit task'}
         </button>
 

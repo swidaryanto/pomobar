@@ -2,7 +2,6 @@ import React from 'react';
 
 interface TimerProps {
     timeLeft: number;
-    sessionLabel: string;
     isEditingTask: boolean;
     taskDraft: string;
     onTaskChange: (value: string) => void;
@@ -13,7 +12,6 @@ interface TimerProps {
 
 const Timer: React.FC<TimerProps> = ({
     timeLeft,
-    sessionLabel,
     isEditingTask,
     taskDraft,
     onTaskChange,
@@ -26,14 +24,10 @@ const Timer: React.FC<TimerProps> = ({
     const tickCount = 7;
     const safeTotalDuration = Math.max(1, totalDurationSeconds);
     const elapsedSeconds = Math.max(0, safeTotalDuration - timeLeft);
-    const progress = Math.min(1, elapsedSeconds / safeTotalDuration);
-    const activeTicks = Math.max(1, Math.ceil(progress * tickCount));
+    const activeTickIndex = elapsedSeconds % tickCount;
 
     return (
         <div className="timer-block">
-            <div className="timer-header">
-                <span className="timer-session">{sessionLabel}</span>
-            </div>
             {isEditingTask ? (
                 <div className="timer-task-actions">
                     <input
@@ -66,7 +60,7 @@ const Timer: React.FC<TimerProps> = ({
                 {Array.from({ length: tickCount }, (_, index) => (
                     <div
                         key={index}
-                        className={`timer-tick${index < activeTicks ? ' is-active' : ''}`}
+                        className={`timer-tick${index === activeTickIndex ? ' is-active' : ''}`}
                     />
                 ))}
             </div>

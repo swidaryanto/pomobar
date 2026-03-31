@@ -277,10 +277,6 @@ function App() {
     },
   });
 
-  const sessionLabel = useMemo(
-    () => (sessionType === 'focus' ? 'Focus' : 'Break'),
-    [sessionType]
-  );
   const currentSessionDurationSeconds = useMemo(
     () => (sessionType === 'focus' ? focusMinutes * 60 : breakMinutes * 60),
     [sessionType, focusMinutes, breakMinutes]
@@ -495,7 +491,6 @@ function App() {
         <div className="timer-layout">
           <Timer
             timeLeft={timeLeft}
-            sessionLabel={sessionLabel}
             isEditingTask={isEditingTask}
             taskDraft={taskDraft}
             onTaskChange={setTaskDraft}
