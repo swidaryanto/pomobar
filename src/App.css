@@ -234,11 +234,15 @@ body[data-theme='analog'] .theme-option.is-active {
 }
 
 .timer-clock {
-  font-size: 60px;
-  font-weight: 400;
-  letter-spacing: -2px;
+  font-family: 'Orbitron', var(--font-mono);
+  font-size: 76px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
   line-height: 1;
   margin-top: 6px;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1;
+  text-transform: uppercase;
 }
 
 .timer-ticks {
@@ -727,8 +731,8 @@ body[data-theme='analog'] .timer-task-input {
 }
 
 body[data-theme='analog'] .timer-clock {
-  font-size: 50px;
-  letter-spacing: -1px;
+  font-size: 70px;
+  letter-spacing: 0.08em;
 }
 
 body[data-theme='analog'] .timer-ticks {
